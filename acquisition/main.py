@@ -15,15 +15,17 @@ class AppManager(QObject):
         self.gui = MainInterface()
         self.producerTread = Producer()
 
-        self.producerTread.mySignal.connect(self.gui.monitorGraph.update_figure)
-        self.producerTread.mySignal.connect(self.gui.frequencyGraph.update_figure)
+        self.producerTread.value_read.connect(self.gui.monitorGraph.update_figure)
+        self.producerTread.value_read.connect(self.gui.frequencyGraph.update_figure)
         self.producerTread.start()
+
 
 """
 -----------------------------------------------------------------------------
                                 GUI
 -----------------------------------------------------------------------------
 """
+
 
 class MainInterface (QMainWindow) :
     """Main interface of the application """
@@ -99,7 +101,6 @@ class MainInterface (QMainWindow) :
 
         self.controlBox.setLayout(controlBoxLayout)
 
-
     def create_simu_pilot(self):
         """Control panel dedicated to simulation parameters"""
         self.simuPilot = QWidget()
@@ -141,6 +142,7 @@ class MainInterface (QMainWindow) :
                             Application Launch
 -----------------------------------------------------------------------------
 """
+
 
 def main() :
     app = QApplication(sys.argv) #define a Qt application
