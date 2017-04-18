@@ -1,0 +1,4 @@
+from acquisition import main
+
+main.main()
+
