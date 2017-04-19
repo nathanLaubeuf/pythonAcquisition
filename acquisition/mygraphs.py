@@ -27,7 +27,6 @@ class GraphCanvas(FigureCanvas):
                 QSizePolicy.MinimumExpanding)
         FigureCanvas.updateGeometry(self)
 
-
     @pyqtSlot()
     def update_figure(self):
         pass
@@ -59,6 +58,7 @@ class DynamicGraphCanvas(GraphCanvas):
 
     @pyqtSlot()
     def update_figure(self):
+        """Updates the graph"""
         self.CurrentXAxis = arange(len(self.values)-1000, len(self.values), 1)  # In theory should be arrange(1, 100, 1)
         self.line1[0].set_data(self.CurrentXAxis, array(list(self.values)))
         self.ax.axis([self.CurrentXAxis.min(), self.CurrentXAxis.max(), -1.5, 1.5])
@@ -66,6 +66,7 @@ class DynamicGraphCanvas(GraphCanvas):
 
     @pyqtSlot(float)
     def update_queue(self, next_value):
+        """Updates the queue and emmit a signal every 10 values to display the new values"""
         self.values.append(next_value)
         #  print("%s" % str(list(self.values)[-1]))
         self.counter += 1
