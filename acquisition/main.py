@@ -15,8 +15,8 @@ class AppManager(QObject):
         self.gui = MainInterface()
         self.producerTread = Producer()
 
-        self.producerTread.value_read.connect(self.gui.monitorGraph.update_figure)
-        self.producerTread.value_read.connect(self.gui.frequencyGraph.update_figure)
+        self.producerTread.value_read.connect(self.gui.monitorGraph.update_queue)
+        self.producerTread.value_read.connect(self.gui.frequencyGraph.update_queue)
         self.producerTread.start()
 
 

@@ -19,7 +19,7 @@ class Producer(QThread):
         while True:
             next_value = -1.5 + random()*3
             self.value_read.emit(next_value)
-            time.sleep(0.05)
+            time.sleep(0.001)
 
 
 @pyqtSlot(float)
