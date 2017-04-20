@@ -2,7 +2,7 @@ import sys
 import matplotlib
 matplotlib.use("Qt5Agg")
 from PyQt5.QtCore import (pyqtSlot, QObject)
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QDesktopWidget, QShortcut, qApp, QFormLayout,QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QLabel, QSpinBox, QComboBox)
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QDesktopWidget, QShortcut, qApp, QFormLayout,QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QLabel, QSpinBox, QComboBox, QDoubleSpinBox)
 from PyQt5.QtGui import (QKeySequence)
 from acquisition.prodcons import Producer
 from acquisition.mygraphs import *
@@ -16,7 +16,7 @@ class AppManager(QObject):
         self.producerTread = Producer()
 
         self.producerTread.value_read.connect(self.gui.monitorGraph.update_queue)
-        self.producerTread.value_read.connect(self.gui.frequencyGraph.update_queue)
+        #self.producerTread.value_read.connect(self.gui.frequencyGraph.update_queue)
         self.producerTread.start()
 
 
@@ -74,10 +74,10 @@ class MainInterface (QMainWindow) :
         graphsBoxLayout = QVBoxLayout()
 
         self.monitorGraph = DynamicGraphCanvas()
-        self.frequencyGraph = DynamicGraphCanvas()
+        #self.frequencyGraph = DynamicGraphCanvas()
 
         graphsBoxLayout.addWidget(self.monitorGraph)
-        graphsBoxLayout.addWidget(self.frequencyGraph)
+        #graphsBoxLayout.addWidget(self.frequencyGraph)
 
         self.graphsBox.setLayout(graphsBoxLayout)
 
@@ -107,13 +107,29 @@ class MainInterface (QMainWindow) :
         layout = QFormLayout()
 
         self.freqSpinBox = QSpinBox()
-        self.freqSpinBox.setRange(0, 100)
-        layout.addRow(QLabel("Sampling Frequency"), self.freqSpinBox)
+        self.freqSpinBox.setRange(0, 1000)
+        self.freqSpinBox.setValue(50)
+        layout.addRow(QLabel("Frequency"), self.freqSpinBox)
 
         self.channelComboBox = QComboBox()
         for i in range(10):
             self.channelComboBox.addItem("%s" % str(i+1))
         layout.addRow(QLabel("Channel"), self.channelComboBox)
+
+        self.grphMaxDoubleSpinBox = QDoubleSpinBox()
+        self.grphMaxDoubleSpinBox.setRange(-5.0, 5.0)
+        self.grphMaxDoubleSpinBox.setValue(1.5)
+        layout.addRow(QLabel("Max"), self.grphMaxDoubleSpinBox)
+
+        self.grphMinDoubleSpinBox = QDoubleSpinBox()
+        self.grphMinDoubleSpinBox.setRange(-5.0, 5.0)
+        self.grphMinDoubleSpinBox.setValue(-1.5)
+        layout.addRow(QLabel("Min"), self.grphMinDoubleSpinBox)
+
+        self.grphNumSampleSpinBox = QSpinBox()
+        self.grphNumSampleSpinBox.setRange(10, 10000)
+        self.grphNumSampleSpinBox.setValue(1000)
+        layout.addRow(QLabel("Num Samples"), self.grphNumSampleSpinBox)
 
         self.simuPilot.setLayout(layout)
 
@@ -139,7 +155,7 @@ class MainInterface (QMainWindow) :
 
 """
 -----------------------------------------------------------------------------
-                            Application Launch
+                            Application Start
 -----------------------------------------------------------------------------
 """
 
