@@ -1,26 +1,27 @@
 import sys
 import time
 from random import random
-from PyQt5.QtCore import (QThread, pyqtSignal, pyqtSlot)
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import (QObject, QThread, pyqtSignal, pyqtSlot, QTimer)
+from PyQt5.QtWidgets import (QApplication, qApp)
 
 
-class Producer(QThread):
+class Producer(QObject):
     """
     Producer thread
     This thread will receive data from the board and emit a signal when new data is available
     """
     value_read = pyqtSignal(float)
+    finished = pyqtSignal()
 
     def __init__(self):
         super().__init__()
 
-    def run(self):
+    @pyqtSlot()
+    def process(self):
         while True:
-            next_value = -1.5 + random()*3
+            next_value = -1.0 + random()*2
             self.value_read.emit(next_value)
             time.sleep(0.001)
-
 
 @pyqtSlot(float)
 def handle(next_value):
@@ -29,7 +30,18 @@ def handle(next_value):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)  # define a Qt application
-    mainThread = Producer()
-    mainThread.value_read.connect(handle)
-    mainThread.run()
+
+    thread = QThread()
+    producer = Producer()
+
+    producer.moveToThread(thread)
+    thread.started.connect(producer.process)
+    producer.finished.connect(thread.quit)
+    producer.finished.connect(producer.deleteLater)
+    thread.finished.connect(thread.deleteLater)
+
+    producer.value_read.connect(handle)
+
+    thread.start()
+
     sys.exit(app.exec_())
