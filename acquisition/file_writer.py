@@ -1,7 +1,7 @@
 import sys
 import os.path
 import csv
-from PyQt5.QtCore import (pyqtSlot, QObject, QThread, pyqtSignal)
+from PyQt5.QtCore import (pyqtSlot, QObject, pyqtSignal)
 
 
 class FileWriter(QObject):

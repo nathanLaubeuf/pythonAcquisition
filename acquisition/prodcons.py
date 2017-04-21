@@ -1,8 +1,8 @@
 import sys
 import time
 from random import random
-from PyQt5.QtCore import (QObject, QThread, pyqtSignal, pyqtSlot, QTimer)
-from PyQt5.QtWidgets import (QApplication, qApp)
+from PyQt5.QtCore import (QObject, QThread, pyqtSignal, pyqtSlot)
+from PyQt5.QtWidgets import (QApplication)
 
 
 class Producer(QObject):

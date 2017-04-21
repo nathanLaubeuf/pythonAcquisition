@@ -160,7 +160,7 @@ class CommsManager(object):
     def send(self, data):
         """
         send data to localhost
-        not user here
+        not used here
         """
         while len(data):
             sent = self.connection.send(data)

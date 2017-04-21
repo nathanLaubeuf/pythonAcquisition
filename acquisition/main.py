@@ -5,7 +5,7 @@ from acquisition.GUI import MainInterface
 from PyQt5.QtCore import (pyqtSlot, QObject, QThread)
 from PyQt5.QtWidgets import (QApplication)
 from acquisition.prodcons import Producer
-from acquisition.file_writer import FileWritter
+from acquisition.file_writer import FileWriter
 
 
 class AppManager(QObject):
@@ -23,7 +23,7 @@ class AppManager(QObject):
         self.producer.finished.connect(self.producer.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
 
-        self.fileWriter = FileWritter()
+        self.fileWriter = FileWriter()
 
         self.connectGuiEvents()
 
