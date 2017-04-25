@@ -12,9 +12,9 @@ from PyObjCTools import AppHelper
 objc.loadBundle("CoreBluetooth", globals(),
     bundle_path=objc.pathForFramework(u'/System/Library/Frameworks/IOBluetooth.framework/Versions/A/Frameworks/CoreBluetooth.framework'))
 
-blebee_service = CBUUID.UUIDWithString_(u'EF080D8C-C3BE-41FF-BD3F-05A5F4795D7F')
-blebee_rx = CBUUID.UUIDWithString_(u'A1E8F5B1-696B-4E4C-87C6-69DFE0B0093B')
-blebee_tx = CBUUID.UUIDWithString_(u'1494440E-9A58-4CC0-81E4-DDEA7F74F623')
+nrf51_service = CBUUID.UUIDWithString_(u'6E400001-B5A3-F393-E0A9-E50E24DCCA9E')
+nrf51_rx = CBUUID.UUIDWithString_(u'6E400003-B5A3-F393-E0A9-E50E24DCCA9E')
+nrf51_tx = CBUUID.UUIDWithString_(u'6E400002-B5A3-F393-E0A9-E50E24DCCA9E')
 
 class RobotDelegate(object):
     """Delegate class of my central manager"""
@@ -34,10 +34,10 @@ class RobotDelegate(object):
     ------------------------------------------------------------------------------------
     """
     def centralManagerDidUpdateState_(self, manager):
-        """Invoked when the central manager’s state is updated."""
+        """Invoked when the central manager s state is updated."""
         print(repr(manager), "done it!")
         self.manager = manager
-        manager.scanForPeripheralsWithServices_options_([blebee_service], None)
+        manager.scanForPeripheralsWithServices_options_([nrf51_service], None)
 
     def centralManager_didDiscoverPeripheral_advertisementData_RSSI_(self, manager, peripheral, data, rssi):
         """Invoked when the central manager discovers a peripheral while scanning."""
@@ -48,7 +48,7 @@ class RobotDelegate(object):
         """Invoked when a connection is successfully created with a peripheral."""
         print(repr(peripheral))
         self.peripheral.setDelegate_(self)
-        self.peripheral.discoverServices_([blebee_service])
+        self.peripheral.discoverServices_([nrf51_service])
 
     def centralManager_didFailToConnectPeripheral_error_(self, manager, peripheral, error):
         """Invoked when the central manager fails to create a connection with a peripheral."""
@@ -66,9 +66,9 @@ class RobotDelegate(object):
     """
 
     def peripheral_didDiscoverServices_(self, peripheral, services):
-        """Invoked when you discover the peripheral’s available services."""
+        """Invoked when you discover the peripheral s available services."""
         self.service = self.peripheral.services()[0]
-        self.peripheral.discoverCharacteristics_forService_([blebee_rx, blebee_tx], self.service)
+        self.peripheral.discoverCharacteristics_forService_([nrf51_rx, nrf51_tx], self.service)
 
     def peripheral_didDiscoverCharacteristicsForService_error_(self, peripheral, service, error):
         """Invoked when you discover the characteristics of a specified service."""
@@ -76,30 +76,30 @@ class RobotDelegate(object):
         print(repr(error))
 
         for characteristic in self.service.characteristics():
-            if characteristic.UUID() == blebee_rx:
+            if characteristic.UUID() == nrf51_rx:
                 self.rx = characteristic
                 self.peripheral.setNotifyValue_forCharacteristic_(True, self.rx)
-            elif characteristic.UUID() == blebee_tx:
+            elif characteristic.UUID() == nrf51_tx:
                 self.tx = characteristic
 
         print(repr(self.rx.UUID()))
         print(repr(self.tx.UUID()))
 
     def peripheral_didWriteValueForCharacteristic_error_(self, peripheral, characteristic, error):
-        """Invoked when you write data to a characteristic’s value."""
+        """Invoked when you write data to a characteristic s value."""
         print(repr(error))
 
     def peripheral_didUpdateNotificationStateForCharacteristic_error_(self, peripheral, characteristic, error):
         """
         Invoked when the peripheral receives a request to start or stop providing notifications for a specified
-        characteristic’s value.
+        characteristic s value.
         """
         print("Receiving notifications")
 
     def peripheral_didUpdateValueForCharacteristic_error_(self, peripheral, characteristic, error):
         """
-        Invoked when you retrieve a specified characteristic’s value, or when the peripheral device notifies
-        your app that the characteristic’s value has changed.
+        Invoked when you retrieve a specified characteristic s value, or when the peripheral device notifies
+        your app that the characteristic s value has changed.
         """
         self.comms.send(characteristic.value().bytes().tobytes())
         print(repr(characteristic.value().bytes().tobytes()))
@@ -117,7 +117,7 @@ class RobotDelegate(object):
             AppHelper.stopEventLoop()
 
     def send(self, byte):
-        """ Writes a byte in the tx characteristic of the blebee service"""
+        """ Writes a byte in the tx characteristic of the nrf51 service"""
         byte = NSData.dataWithBytes_length_(byte, 1)
         self.peripheral.writeValue_forCharacteristic_type_(byte, self.tx, 0) # Writes the value of a characteristic.
 
