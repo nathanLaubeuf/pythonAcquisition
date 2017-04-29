@@ -2,6 +2,7 @@ import sys
 import socket
 import time
 from random import random
+from queue import Queue
 from PyQt5.QtCore import (QObject, QThread, pyqtSignal, pyqtSlot)
 from PyQt5.QtWidgets import (QApplication)
 
@@ -14,10 +15,17 @@ class Server(QObject):
     data_read = pyqtSignal(bytes)
     finished = pyqtSignal()
     sock = None
-    server_address = ('localhost', 10000)
+    server_address = None
+    dataList = []
+    dataflow = ""
+    dataSend = []
 
     def __init__(self):
         super().__init__()
+        self.server_address = ('localhost', 10000)
+        self.dataList = []
+        self.dataflow = ""
+        self.dataSend = []
 
     @pyqtSlot()
     def process(self):
@@ -34,11 +42,18 @@ class Server(QObject):
 
                 # Receive the data in small chunks and retransmit it
                 while True:
-                    data = connection.recv(15) # buffer de la taille du nombre d adc * nb_bits_adc / 8 bits
+                    data = connection.recv(20)
                     print('received "%s"' % data)
                     if data:
-                        print('sending data to the consumers')
-                        self.data_read.emit(data)
+                        print('recived data')
+                        self.dataflow += data.decode("utf-8")
+                        while len(dataflow) > 12:
+                            print('Buffered: {0}'.format(dataflow))
+                            self.dataList = dataflow.split(' ')
+                            print(self.dataList)
+                            self.dataSend = self.dataList.pop(0).split("|")
+                            print("Value : {0}".format(self.dataList.pop(0)))
+                            dataflow = " ".join(self.dataList)
                     else:
                         print('no more data from', client_address)
                         break
@@ -47,8 +62,7 @@ class Server(QObject):
                 # Clean up the connection
                 connection.close()
 
-            next_value = -1.0 + random()*2
-            time.sleep(0.001)
+
 
 class Dummy_Client(QObject):
 

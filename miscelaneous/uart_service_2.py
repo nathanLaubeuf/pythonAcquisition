@@ -1,13 +1,9 @@
 # Example of interaction with a BLE UART device using a UART service
 # implementation.
 # Author: Tony DiCola
+import time
 import Adafruit_BluefruitLE
 from Adafruit_BluefruitLE.services.uart import UART
-import socket
-import time
-import sys
-
-# /!\ Only works in python2.7
 
 
 # Get the BLE provider for the current platform.
@@ -20,26 +16,6 @@ ble = Adafruit_BluefruitLE.get_provider()
 # of automatically though and you just need to provide a main function that uses
 # the BLE provider.
 def main():
-
-    data = []
-    dataflow = ""
-
-    ###############################################################################
-    #                                  Socket init
-    ###############################################################################
-
-    # Create a TCP/IP socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # Connect the socket to the port where the server is listening
-    server_address = ('localhost', 10000)
-    print('connecting to %s port %s' % server_address)
-    sock.connect(server_address)
-
-    ###############################################################################
-    #                                  BLE init
-    ###############################################################################
-
     # Clear any cached data because both bluez and CoreBluetooth have issues with
     # caching data and it going stale.
     ble.clear_cached_data()
@@ -89,19 +65,20 @@ def main():
 
         # Now wait up to one minute to receive data from the device.
         print('Waiting up to 60 seconds to receive data from the device...')
-        received = uart.read(timeout_sec=60)
-        while received is not None:
-            print('Received: {0}'.format(received))
-            sock.sendall(received)
+        for i in range(1000):
             received = uart.read(timeout_sec=60)
-        print('End of transmission')
-
+            if received is not None:
+                # Received data, print it out.
+                print('Received: {0}'.format(received))
+            else:
+                # Timeout waiting for data, None is returned.
+                print('Received no data!')
     finally:
         # Make sure device is disconnected on exit.
-        print('closing socket')
-        sock.close()
-        time.sleep(1)
-        print('Disconnecting device')
+        uart.write('STOP')
+        print("Sent 'STOP' to the device.")
+        time.sleep(2)
+        print("Device disconnect.")
         device.disconnect()
 
 
