@@ -12,7 +12,7 @@ class Server(QObject):
     Producer thread
     This thread will receive data from the board and emit a signal when new data is available
     """
-    data_read = pyqtSignal(bytes)
+    data_read = pyqtSignal(list)
     finished = pyqtSignal()
     sock = None
     server_address = None
@@ -29,12 +29,15 @@ class Server(QObject):
 
     @pyqtSlot()
     def process(self):
+
+        datum = ""
+
         print('starting up on %s port %s' % self.server_address)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind(self.server_address)
         self.sock.listen()
-
         while True:
+            # Wait for a connection
             print('waiting for a connection')
             connection, client_address = self.sock.accept()
             try:
@@ -46,14 +49,26 @@ class Server(QObject):
                     print('received "%s"' % data)
                     if data:
                         print('recived data')
-                        self.dataflow += data.decode("utf-8")
-                        while len(dataflow) > 12:
-                            print('Buffered: {0}'.format(dataflow))
-                            self.dataList = dataflow.split(' ')
-                            print(self.dataList)
-                            self.dataSend = self.dataList.pop(0).split("|")
-                            print("Value : {0}".format(self.dataList.pop(0)))
-                            dataflow = " ".join(self.dataList)
+                        try:
+                            self.dataflow += data.decode("utf-8")
+                            while len(self.dataflow) > 12:
+                                print('Buffered: {0}'.format(self.dataflow))
+                                self.dataList = self.dataflow.split(' ')
+                                print(self.dataList)
+                                try:
+                                    datum = self.dataList.pop(0)
+                                    self.dataSend = datum.split("|")
+                                    self.dataSend = list(map(int, self.dataSend))
+                                    print("Value : {0}".format(self.dataSend))
+                                    self.data_read.emit(self.dataSend)
+
+                                except ValueError:
+                                    print("Value Error")
+                                finally:
+                                    self.dataflow = " ".join(self.dataList)
+                        except UnicodeDecodeError:
+                            print("UnicodeDecodeError")
+
                     else:
                         print('no more data from', client_address)
                         break
@@ -80,7 +95,7 @@ class Dummy_Client(QObject):
         try:
 
             # Send data
-            message = ('AAAAAAAAAAAAAAA').encode('utf-8')
+            message = (' 123|123 123|123 123|123').encode('utf-8')
             print('sending "%s"' % message)
             self.sock.sendall(message)
 
@@ -89,7 +104,7 @@ class Dummy_Client(QObject):
             self.sock.close()
             self.finished.emit()
 
-@pyqtSlot(bytes)
+@pyqtSlot(list)
 def handle(next_value):
     """Test handler"""
     print("sent to gui : %s" % str(next_value))

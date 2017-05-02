@@ -1,10 +1,12 @@
 import sys
+import os
+import subprocess
 import matplotlib
 matplotlib.use("Qt5Agg")
 from acquisition.GUI import MainInterface
 from PyQt5.QtCore import (pyqtSlot, QObject, QThread)
 from PyQt5.QtWidgets import (QApplication)
-from acquisition.prodcons import Producer
+from acquisition.server import Server
 from acquisition.file_writer import FileWriter
 
 
@@ -15,7 +17,8 @@ class AppManager(QObject):
         self.gui = MainInterface()
 
         self.thread = QThread()
-        self.producer = Producer()
+        self.producer = Server()
+        self.uartProcess = None
 
         self.producer.moveToThread(self.thread)
         self.thread.started.connect(self.producer.process)
@@ -27,12 +30,13 @@ class AppManager(QObject):
 
         self.connectGuiEvents()
 
-        self.producer.value_read.connect(self.gui.monitorGraph.update_queue)
+        self.producer.data_read.connect(self.gui.monitorGraph.update_queue)
         self.thread.start()
 
 
     def connectGuiEvents(self):
         self.gui.startButton.clicked.connect(self.startButtonHandle)
+        self.gui.recordButton.clicked.connect(self.recordButtonHandle)
         self.gui.grphNumSampleSpinBox.valueChanged.connect(self.gui.monitorGraph.setNumSample)
         self.gui.grphScaleDoubleSpinBox.valueChanged.connect(self.gui.monitorGraph.scaleUpdate)
         self.gui.grphOffsetDoubleSpinBox.valueChanged.connect(self.gui.monitorGraph.offsetUpdate)
@@ -41,28 +45,39 @@ class AppManager(QObject):
         self.gui.testSpinBox.valueChanged.connect(self.fileWriter.setTestNum)
         self.gui.workingDirSelect.valueChanged.connect(self.fileWriter.setWorkDir)
 
+
     @pyqtSlot()
     def startButtonHandle(self):
         if self.gui.startButton.isChecked():
+            self.gui.monitorGraph.clearGraph()
+            self.uartProcess = subprocess.Popen(["python2", os.getcwd() + "/uart_process.py"])
             self.gui.startButton.setText("Stop")
+        else:
+            self.uartProcess.terminate()
+            self.gui.startButton.setText("Start")
+            self.gui.statusBar().showMessage('Ready')
+            if self.gui.recordButton.isChecked():
+                self.fileWriter.stopRecord()
+                self.gui.recordButton.setChecked(False)
+
+    @pyqtSlot()
+    def recordButtonHandle(self):
+        if self.gui.recordButton.isChecked():
             try:
                  self.fileWriter.startRecord()
             except NotADirectoryError:
                 self.gui.statusBar().showMessage('No such Directory, Pease Chose a Working directory')
-                self.gui.startButton.setChecked(False)
-                self.gui.startButton.setText("Start")
+                self.gui.recordButton.setChecked(False)
             except FileExistsError:
                 self.gui.statusBar().showMessage('The file already exists, please change test, session or patient number')
-                self.gui.startButton.setChecked(False)
-                self.gui.startButton.setText("Start")
+                self.gui.recordButton.setChecked(False)
             else:
-                self.producer.value_read.connect(self.fileWriter.writeValue)
-                self.gui.startButton.clicked.connect(self.fileWriter.stopRecord)
+                self.producer.data_read.connect(self.fileWriter.writeValue)
+                self.gui.recordButton.clicked.connect(self.fileWriter.stopRecord)
                 self.gui.statusBar().showMessage('Recording')
         else:
-            self.producer.value_read.disconnect(self.fileWriter.writeValue)
-            self.gui.startButton.clicked.disconnect(self.fileWriter.stopRecord)
-            self.gui.startButton.setText("Start")
+            self.producer.data_read.disconnect(self.fileWriter.writeValue)
+            self.gui.recordButton.clicked.disconnect(self.fileWriter.stopRecord)
             self.gui.statusBar().showMessage('Ready')
 
 

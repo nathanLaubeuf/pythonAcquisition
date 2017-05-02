@@ -73,13 +73,13 @@ class FileWriter(QObject):
             raise FileExistsError
         else:
             self.file = open(self.fileName, 'w')
-            self.writer = csv.writer(self.file, delimiter=' ',
+            self.writer = csv.writer(self.file, delimiter=';',
                                 quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
-    @pyqtSlot(float)
+    @pyqtSlot(list)
     def writeValue(self, value):
         """writes the received values into he specified file"""
-        self.writer.writerow([value])
+        self.writer.writerow(value)
 
     @pyqtSlot()
     def stopRecord(self):

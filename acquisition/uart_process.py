@@ -23,6 +23,7 @@ def main():
 
     data = []
     dataflow = ""
+    notFound = True
 
     ###############################################################################
     #                                  Socket init
@@ -60,7 +61,12 @@ def main():
         adapter.start_scan()
         # Search for the first UART device found (will time out after 60 seconds
         # but you can specify an optional timeout_sec parameter to change it).
-        device = UART.find_device()
+        while notFound: # Only connects to desired device
+            devices = UART.find_devices()
+            for deviceIter in devices:
+                if deviceIter.name == "Adafruit Bluefruit LE":
+                    notFound = False
+                    device = deviceIter
         if device is None:
             raise RuntimeError('Failed to find UART device!')
     finally:
@@ -69,7 +75,7 @@ def main():
 
     print('Connecting to device...')
     device.connect()  # Will time out after 60 seconds, specify timeout_sec parameter
-                      # to change the timeout.
+    # to change the timeout.
 
     # Once connected do everything else in a try/finally to make sure the device
     # is disconnected when done.
@@ -98,6 +104,9 @@ def main():
 
     finally:
         # Make sure device is disconnected on exit.
+        uart.write('STOP')
+        print("Sent 'STOP' to the device.")
+        time.sleep(1)
         print('closing socket')
         sock.close()
         time.sleep(1)

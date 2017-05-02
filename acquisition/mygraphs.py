@@ -41,6 +41,8 @@ class DynamicGraphCanvas(GraphCanvas):
     minValue = -1.0
     scale = 1.0
     offset = 0
+    chanIndex = 0
+    channelValues = [deque(10000 * [0], 10000), deque(10000 * [0], 10000)]
 
     def __init__(self, *args, **kwargs):
         GraphCanvas.__init__(self, *args, **kwargs)
@@ -48,7 +50,7 @@ class DynamicGraphCanvas(GraphCanvas):
         self.minMaxUpdateSig.connect(self.minMaxUpdate)
 
     def compute_initial_figure(self):
-        self.values = deque(10000 * [0], 10000)
+        #self.values = deque(10000 * [0], 10000)
         self.counter = 0
         x_achse = arange(0, self.numSample, 1)
         y_achse = array([.0] * self.numSample)
@@ -68,14 +70,17 @@ class DynamicGraphCanvas(GraphCanvas):
     def update_figure(self):
         """Updates the graph"""
         self.CurrentXAxis = arange(0, self.numSample, 1)
-        self.line1[0].set_data(self.CurrentXAxis, array(list(self.values)[-self.numSample:]))
+        self.line1[0].set_data(self.CurrentXAxis, array(list(self.channelValues[self.chanIndex])[-self.numSample:]))
         self.ax.axis([self.CurrentXAxis.min(), self.CurrentXAxis.max(), self.minValue, self.maxValue])
         self.fig.canvas.draw()
 
-    @pyqtSlot(float)
+    @pyqtSlot(list)
     def update_queue(self, next_value):
         """Updates the queue and emmit a signal every 10 values to display the new values"""
-        self.values.append(next_value)
+        #self.values.append(next_value[self.chanIndex])
+        for i in range(len(self.channelValues)):
+            self.channelValues[i].append(next_value[i])
+
         #  print("%s" % str(list(self.values)[-1]))
         self.counter += 1
         if self.counter >= 10:
@@ -101,3 +106,11 @@ class DynamicGraphCanvas(GraphCanvas):
     def minMaxUpdate(self):
         self.minValue = - self.offset - self.scale
         self.maxValue = - self.offset + self.scale
+
+    @pyqtSlot(int)
+    def channelUpdate(self, chan):
+        self.chanIndex = chan
+
+    @pyqtSlot()
+    def clearGraph(self):
+        self.channelValues = [deque(10000 * [0], 10000), deque(10000 * [0], 10000)]

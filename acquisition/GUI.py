@@ -22,6 +22,8 @@ from acquisition.repo_select import RepoSelect
 
 class MainInterface (QMainWindow) :
     """Main interface of the application """
+    chanChangeSig = pyqtSignal(int)
+
     def __init__(self):
         super().__init__()
         self.initUI()
@@ -52,7 +54,17 @@ class MainInterface (QMainWindow) :
 
     # Creating statusBar
         self.statusBar().showMessage('Ready')
+
+    # Handle channel change event
+        self.channelComboBox.currentIndexChanged.connect(self.chanChange)
+        self.chanChangeSig.connect(self.monitorGraph.channelUpdate)
+
         self.show()
+
+    @pyqtSlot()
+    def chanChange(self):
+        self.chanChangeSig.emit(self.channelComboBox.currentIndex())
+
 
     def center(self):
         """centering the main window"""
@@ -85,6 +97,12 @@ class MainInterface (QMainWindow) :
         self.startButton.setMaximumWidth(180)
         controlBoxLayout.addWidget(self.startButton)
 
+        self.recordButton = QPushButton()
+        self.recordButton.setText("Record")
+        self.recordButton.setCheckable(True)
+        self.recordButton.setMaximumWidth(180)
+        controlBoxLayout.addWidget(self.recordButton)
+
         self.create_simu_pilot()
         self.simuPilot.resize(100, 250)
         controlBoxLayout.addWidget(self.simuPilot)
@@ -100,13 +118,13 @@ class MainInterface (QMainWindow) :
         self.simuPilot = QWidget()
         layout = QFormLayout()
 
-        self.freqSpinBox = QSpinBox()
-        self.freqSpinBox.setRange(0, 1000)
-        self.freqSpinBox.setValue(50)
-        layout.addRow(QLabel("Frequency"), self.freqSpinBox)
+        # self.freqSpinBox = QSpinBox()
+        # self.freqSpinBox.setRange(0, 1000)
+        # self.freqSpinBox.setValue(50)
+        # layout.addRow(QLabel("Frequency"), self.freqSpinBox)
 
         self.channelComboBox = QComboBox()
-        for i in range(10):
+        for i in range(2):
             self.channelComboBox.addItem("%s" % str(i+1))
         layout.addRow(QLabel("Channel"), self.channelComboBox)
 
@@ -116,7 +134,7 @@ class MainInterface (QMainWindow) :
         layout.addRow(QLabel("Scale"), self.grphScaleDoubleSpinBox)
 
         self.grphOffsetDoubleSpinBox = QDoubleSpinBox()
-        self.grphOffsetDoubleSpinBox.setRange(-100, 100)
+        self.grphOffsetDoubleSpinBox.setRange(-1000, 1000)
         self.grphOffsetDoubleSpinBox.setValue(0)
         layout.addRow(QLabel("Offset"), self.grphOffsetDoubleSpinBox)
 
