@@ -37,12 +37,13 @@ class DynamicGraphCanvas(GraphCanvas):
     figUpdate = pyqtSignal()
     minMaxUpdateSig = pyqtSignal()
     numSample = 1000
-    maxValue = 1.0
-    minValue = -1.0
-    scale = 1.0
+    maxValue = 2000.0
+    minValue = -2000.0
+    scale = 2000.0
     offset = 0
     chanIndex = 0
-    channelValues = [deque(10000 * [0], 10000), deque(10000 * [0], 10000)]
+    numChan = 5
+    channelValues = [deque(10000 * [0], 10000) for i in range(5)]
 
     def __init__(self, *args, **kwargs):
         GraphCanvas.__init__(self, *args, **kwargs)
@@ -78,6 +79,8 @@ class DynamicGraphCanvas(GraphCanvas):
     def update_queue(self, next_value):
         """Updates the queue and emmit a signal every 10 values to display the new values"""
         #self.values.append(next_value[self.chanIndex])
+        if len(next_value) != self.numChan:
+            return
         for i in range(len(self.channelValues)):
             self.channelValues[i].append(next_value[i])
 
@@ -113,4 +116,4 @@ class DynamicGraphCanvas(GraphCanvas):
 
     @pyqtSlot()
     def clearGraph(self):
-        self.channelValues = [deque(10000 * [0], 10000), deque(10000 * [0], 10000)]
+        self.channelValues = [deque(10000 * [0], 10000) for i in range(self.numChan)]

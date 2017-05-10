@@ -5,10 +5,12 @@ import Adafruit_BluefruitLE
 from Adafruit_BluefruitLE.services.uart import UART
 import socket
 import time
+import signal
+import sys
 import sys
 
 # /!\ Only works in python2.7
-
+# Try to make exit more graceful : http://stackoverflow.com/questions/18499497/how-to-process-sigterm-signal-gracefully
 
 # Get the BLE provider for the current platform.
 ble = Adafruit_BluefruitLE.get_provider()
@@ -33,7 +35,7 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # Connect the socket to the port where the server is listening
-    server_address = ('localhost', 10000)
+    server_address = ('localhost', 12000)
     print('connecting to %s port %s' % server_address)
     sock.connect(server_address)
 
@@ -104,6 +106,9 @@ def main():
 
     finally:
         # Make sure device is disconnected on exit.
+        uart.write('STOP')
+        print("Sent 'STOP' to the device.")
+        time.sleep(1)
         uart.write('STOP')
         print("Sent 'STOP' to the device.")
         time.sleep(1)

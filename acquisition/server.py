@@ -19,10 +19,13 @@ class Server(QObject):
     dataList = []
     dataflow = ""
     dataSend = []
+    voltage_Value = .0
+    res_Value = .0
+    R0_val = 1500.0
 
     def __init__(self):
         super().__init__()
-        self.server_address = ('localhost', 10000)
+        self.server_address = ('localhost', 12000)
         self.dataList = []
         self.dataflow = ""
         self.dataSend = []
@@ -45,13 +48,13 @@ class Server(QObject):
 
                 # Receive the data in small chunks and retransmit it
                 while True:
-                    data = connection.recv(20)
+                    data = connection.recv(40)
                     print('received "%s"' % data)
                     if data:
-                        print('recived data')
+                        print('received data')
                         try:
                             self.dataflow += data.decode("utf-8")
-                            while len(self.dataflow) > 12:
+                            while len(self.dataflow) > 32:
                                 print('Buffered: {0}'.format(self.dataflow))
                                 self.dataList = self.dataflow.split(' ')
                                 print(self.dataList)
@@ -60,7 +63,20 @@ class Server(QObject):
                                     self.dataSend = datum.split("|")
                                     self.dataSend = list(map(int, self.dataSend))
                                     print("Value : {0}".format(self.dataSend))
-                                    self.data_read.emit(self.dataSend)
+                                    if self.dataSend.pop(0) == 0:
+                                        self.voltage_Value = [elt / 1023 for elt in self.dataSend]
+                                        # self.res_Value = [round(self.R0_val*(self.Vref/volt - 1)) for volt in self.voltage_Value]
+                                    else:
+                                        self.voltage_Value = [(1023 - elt) / 1023 for elt in self.dataSend]
+                                    try:
+                                        self.res_Value = [round(self.R0_val * (1 / volt - 1), 1) for volt in
+                                                          self.voltage_Value]
+                                    except ZeroDivisionError:
+                                        self.res_Value = [round(self.R0_val * (1 / (volt+0.0001) - 1), 1) for volt in
+                                                          self.voltage_Value]
+                                    print("Volt : {0}".format(self.voltage_Value))
+                                    print("Resistance : {0}".format(self.res_Value))
+                                    self.data_read.emit(self.res_Value)
 
                                 except ValueError:
                                     print("Value Error")
@@ -83,7 +99,7 @@ class Dummy_Client(QObject):
 
     sock = None
     finished = pyqtSignal()
-    server_address = ('localhost', 10000)
+    server_address = ('localhost', 12000)
 
 
     def __init__(self):

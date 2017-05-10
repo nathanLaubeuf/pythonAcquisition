@@ -1,15 +1,12 @@
 
 import matplotlib
 matplotlib.use("Qt5Agg")
-from PyQt5.QtCore import (pyqtSlot, QObject)
-from PyQt5.QtWidgets import (QApplication, QMainWindow,
+from PyQt5.QtWidgets import (QMainWindow,
                              QWidget, QDesktopWidget, QShortcut,
-                             qApp, QFormLayout,QVBoxLayout,
-                             QHBoxLayout, QGridLayout, QPushButton,
+                             qApp, QFormLayout,QVBoxLayout, QGridLayout, QPushButton,
                              QLabel, QSpinBox, QComboBox,
-                             QDoubleSpinBox, QLineEdit)
+                             QDoubleSpinBox)
 from PyQt5.QtGui import (QKeySequence)
-from acquisition.prodcons import Producer
 from acquisition.mygraphs import *
 from acquisition.repo_select import RepoSelect
 
@@ -124,22 +121,22 @@ class MainInterface (QMainWindow) :
         # layout.addRow(QLabel("Frequency"), self.freqSpinBox)
 
         self.channelComboBox = QComboBox()
-        for i in range(2):
+        for i in range(5):
             self.channelComboBox.addItem("%s" % str(i+1))
         layout.addRow(QLabel("Channel"), self.channelComboBox)
 
         self.grphScaleDoubleSpinBox = QDoubleSpinBox()
-        self.grphScaleDoubleSpinBox.setRange(.1, 10000)
-        self.grphScaleDoubleSpinBox.setValue(1.0)
+        self.grphScaleDoubleSpinBox.setRange(.1, 1000000)
+        self.grphScaleDoubleSpinBox.setValue(2000.0)
         layout.addRow(QLabel("Scale"), self.grphScaleDoubleSpinBox)
 
         self.grphOffsetDoubleSpinBox = QDoubleSpinBox()
-        self.grphOffsetDoubleSpinBox.setRange(-1000, 1000)
+        self.grphOffsetDoubleSpinBox.setRange(-1000000, 1000000)
         self.grphOffsetDoubleSpinBox.setValue(0)
         layout.addRow(QLabel("Offset"), self.grphOffsetDoubleSpinBox)
 
         self.grphNumSampleSpinBox = QSpinBox()
-        self.grphNumSampleSpinBox.setRange(10, 10000)
+        self.grphNumSampleSpinBox.setRange(10, 100000)
         self.grphNumSampleSpinBox.setValue(1000)
         layout.addRow(QLabel("Num Samples"), self.grphNumSampleSpinBox)
 
