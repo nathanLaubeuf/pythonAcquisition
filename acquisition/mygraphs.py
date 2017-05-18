@@ -37,13 +37,13 @@ class DynamicGraphCanvas(GraphCanvas):
     figUpdate = pyqtSignal()
     minMaxUpdateSig = pyqtSignal()
     numSample = 1000
-    maxValue = 2000.0
-    minValue = -2000.0
-    scale = 2000.0
-    offset = 0
+    maxValue = 1500.0
+    minValue = 500.0
+    scale = 500.0
+    offset = -1000.0
     chanIndex = 0
-    numChan = 5
-    channelValues = [deque(10000 * [0], 10000) for i in range(5)]
+    numChan = 3
+    channelValues = [deque(10000 * [0], 10000) for i in range(numChan)]
 
     def __init__(self, *args, **kwargs):
         GraphCanvas.__init__(self, *args, **kwargs)
@@ -86,7 +86,7 @@ class DynamicGraphCanvas(GraphCanvas):
 
         #  print("%s" % str(list(self.values)[-1]))
         self.counter += 1
-        if self.counter >= 10:
+        if self.counter >= 5:
             self.figUpdate.emit()
             self.counter = 0
 

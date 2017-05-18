@@ -2,13 +2,14 @@ import sys
 import os
 import subprocess
 import matplotlib
-matplotlib.use("Qt5Agg")
 from acquisition.GUI import MainInterface
 from PyQt5.QtCore import (pyqtSlot, QObject, QThread)
 from PyQt5.QtWidgets import (QApplication)
 from acquisition.server import Server
 from acquisition.file_writer import FileWriter
+from acquisition.filter import  Filter
 
+matplotlib.use("Qt5Agg")
 
 class AppManager(QObject):
     def __init__(self, parent=None):
@@ -18,6 +19,7 @@ class AppManager(QObject):
 
         self.thread = QThread()
         self.producer = Server()
+        self.filter = Filter()
         self.uartProcess = None
 
         self.producer.moveToThread(self.thread)
@@ -30,7 +32,8 @@ class AppManager(QObject):
 
         self.connectGuiEvents()
 
-        self.producer.data_read.connect(self.gui.monitorGraph.update_queue)
+        self.producer.data_read.connect(self.filter.resfilter)
+        self.filter.filtered.connect(self.gui.monitorGraph.update_queue)
         self.thread.start()
 
 
@@ -72,11 +75,11 @@ class AppManager(QObject):
                 self.gui.statusBar().showMessage('The file already exists, please change test, session or patient number')
                 self.gui.recordButton.setChecked(False)
             else:
-                self.producer.data_read.connect(self.fileWriter.writeValue)
+                self.filter.filtered.connect(self.fileWriter.writeValue)
                 self.gui.recordButton.clicked.connect(self.fileWriter.stopRecord)
                 self.gui.statusBar().showMessage('Recording')
         else:
-            self.producer.data_read.disconnect(self.fileWriter.writeValue)
+            self.filter.filtered.disconnect(self.fileWriter.writeValue)
             self.gui.recordButton.clicked.disconnect(self.fileWriter.stopRecord)
             self.gui.statusBar().showMessage('Ready')
 

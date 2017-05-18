@@ -21,7 +21,7 @@ class Server(QObject):
     dataSend = []
     voltage_Value = .0
     res_Value = .0
-    R0_val = 1500.0
+    R0_val = 1200.0
 
     def __init__(self):
         super().__init__()
@@ -49,37 +49,45 @@ class Server(QObject):
                 # Receive the data in small chunks and retransmit it
                 while True:
                     data = connection.recv(40)
-                    print('received "%s"' % data)
+                    # print('received "%s"' % data)
                     if data:
-                        print('received data')
+                        # print('received data')
                         try:
                             self.dataflow += data.decode("utf-8")
                             while len(self.dataflow) > 32:
-                                print('Buffered: {0}'.format(self.dataflow))
+                                #print('Buffered: {0}'.format(self.dataflow))
                                 self.dataList = self.dataflow.split(' ')
-                                print(self.dataList)
+                                # print(self.dataList)
                                 try:
                                     datum = self.dataList.pop(0)
+                                    volt_min = 0
+                                    volt_max = 1023
                                     self.dataSend = datum.split("|")
                                     self.dataSend = list(map(int, self.dataSend))
                                     print("Value : {0}".format(self.dataSend))
                                     if self.dataSend.pop(0) == 0:
-                                        self.voltage_Value = [elt / 1023 for elt in self.dataSend]
-                                        # self.res_Value = [round(self.R0_val*(self.Vref/volt - 1)) for volt in self.voltage_Value]
+                                        # self.voltage_Value = [elt / 1023 for elt in self.dataSend]
+                                        volt_max = self.dataSend[3]
+                                        volt_min = self.dataSend[4]
                                     else:
-                                        self.voltage_Value = [(1023 - elt) / 1023 for elt in self.dataSend]
+                                        # self.voltage_Value = [(1023 - elt) / 1023 for elt in self.dataSend]
+                                        volt_max = self.dataSend[3]
+                                        volt_min = self.dataSend[4]
                                     try:
+                                        self.voltage_Value = [(elt - volt_min)/(volt_max - volt_min) for elt in self.dataSend[0:3]]
                                         self.res_Value = [round(self.R0_val * (1 / volt - 1), 1) for volt in
                                                           self.voltage_Value]
                                     except ZeroDivisionError:
-                                        self.res_Value = [round(self.R0_val * (1 / (volt+0.0001) - 1), 1) for volt in
+                                        self.res_Value = [round(self.R0_val * (1 / (volt + 0.1) - 1), 1) for volt in
                                                           self.voltage_Value]
-                                    print("Volt : {0}".format(self.voltage_Value))
-                                    print("Resistance : {0}".format(self.res_Value))
+                                    # print("Volt : {0}".format(self.voltage_Value))
+                                    # print("Resistance : {0}".format(self.res_Value))
                                     self.data_read.emit(self.res_Value)
 
                                 except ValueError:
                                     print("Value Error")
+                                except IndexError:
+                                    print("IndexError")
                                 finally:
                                     self.dataflow = " ".join(self.dataList)
                         except UnicodeDecodeError:

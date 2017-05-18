@@ -1,4 +1,3 @@
-
 import matplotlib
 matplotlib.use("Qt5Agg")
 from PyQt5.QtWidgets import (QMainWindow,
@@ -127,12 +126,12 @@ class MainInterface (QMainWindow) :
 
         self.grphScaleDoubleSpinBox = QDoubleSpinBox()
         self.grphScaleDoubleSpinBox.setRange(.1, 1000000)
-        self.grphScaleDoubleSpinBox.setValue(2000.0)
+        self.grphScaleDoubleSpinBox.setValue(500.0)
         layout.addRow(QLabel("Scale"), self.grphScaleDoubleSpinBox)
 
         self.grphOffsetDoubleSpinBox = QDoubleSpinBox()
         self.grphOffsetDoubleSpinBox.setRange(-1000000, 1000000)
-        self.grphOffsetDoubleSpinBox.setValue(0)
+        self.grphOffsetDoubleSpinBox.setValue(-1000.0)
         layout.addRow(QLabel("Offset"), self.grphOffsetDoubleSpinBox)
 
         self.grphNumSampleSpinBox = QSpinBox()
