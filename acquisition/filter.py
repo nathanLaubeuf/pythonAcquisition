@@ -5,7 +5,7 @@ from PyQt5.QtCore import (QObject, QThread, pyqtSignal, pyqtSlot)
 
 
 class Filter (QObject):
-    num_chan = 3
+    num_chan = 10
     dataList = []
     filtered = pyqtSignal(list)
 
