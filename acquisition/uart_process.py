@@ -98,7 +98,7 @@ def main():
         print('Waiting up to 60 seconds to receive data from the device...')
         received = uart.read(timeout_sec=60)
         while received is not None:
-            print('Received: {0}'.format(received))
+            # print('Received: {0}'.format(received))
             sock.sendall(received)
             received = uart.read(timeout_sec=60)
         print('End of transmission')
