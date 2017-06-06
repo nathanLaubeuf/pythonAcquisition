@@ -5,7 +5,7 @@ import matplotlib
 from acquisition.GUI import MainInterface
 from PyQt5.QtCore import (pyqtSlot, QObject, QThread)
 from PyQt5.QtWidgets import (QApplication)
-from acquisition.server import Server
+from miscelaneous.test_server import Server
 from acquisition.file_writer import FileWriter
 from acquisition.filter import  Filter
 

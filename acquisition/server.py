@@ -1,6 +1,9 @@
 import sys
 import socket
 import time
+
+from struct import *
+
 from random import random
 from queue import Queue
 from PyQt5.QtCore import (QObject, QThread, pyqtSignal, pyqtSlot)
@@ -48,52 +51,54 @@ class Server(QObject):
 
                 # Receive the data in small chunks and retransmit it
                 while True:
-                    data = connection.recv(40)
-                    # print('received "%s"' % data)
-                    if data:
-                        # print('received data')
-                        try:
-                            self.dataflow += data.decode("utf-8")
-                            while len(self.dataflow) > 32:
-                                #print('Buffered: {0}'.format(self.dataflow))
-                                self.dataList = self.dataflow.split(' ')
-                                # print(self.dataList)
-                                try:
-                                    datum = self.dataList.pop(0)
-                                    volt_min = 0
-                                    volt_max = 4095
-                                    self.dataSend = datum.split("|")
-                                    self.dataSend = list(map(int, self.dataSend))
-                                    print("Value : {0}".format(self.dataSend))
-                                    volt_max = max(self.dataSend[-2:])
-                                    volt_min = min(self.dataSend[-2:])
+                    data = connection.recv(2)
+                    print('received "%s"' % data)
+                    if data :
+                        if len(data)==2:
+                            # print('received data')
+                            try:
+                                self.dataflow += str(unpack('H', data))
+                                print(self.dataflow)
+                                while len(self.dataflow) > 32:
+                                    #print('Buffered: {0}'.format(self.dataflow))
+                                    self.dataList = self.dataflow.split(' ')
+                                    # print(self.dataList)
                                     try:
-                                        # elts = [elt/2 + 1241 for elt in self.dataSend[1:4]]
-                                        self.voltage_Value = [(elt - volt_min)/(volt_max - volt_min) for elt in self.dataSend[1:-2]]
-                                        if self.dataSend.pop(0) == 0:
-                                            # self.voltage_Value = [elt / 1023 for elt in self.dataSend]
-                                            self.res_Value = [round(self.R0_val * (1 / volt - 1), 1) for volt in
+                                        datum = self.dataList.pop(0)
+                                        volt_min = 0
+                                        volt_max = 4095
+                                        self.dataSend = datum.split("|")
+                                        self.dataSend = list(map(int, self.dataSend))
+                                        print("Value : {0}".format(self.dataSend))
+                                        volt_max = max(self.dataSend[-2:])
+                                        volt_min = min(self.dataSend[-2:])
+                                        try:
+                                            # elts = [elt/2 + 1241 for elt in self.dataSend[1:4]]
+                                            self.voltage_Value = [(elt - volt_min)/(volt_max - volt_min) for elt in self.dataSend[1:-2]]
+                                            if self.dataSend.pop(0) == 0:
+                                                # self.voltage_Value = [elt / 1023 for elt in self.dataSend]
+                                                self.res_Value = [round(self.R0_val * (1 / volt - 1), 1) for volt in
+                                                                  self.voltage_Value]
+                                            else:
+                                                # self.voltage_Value = [(1023 - elt) / 1023 for elt in self.dataSend]
+                                                self.res_Value = [round(self.R0_val * (volt / (1 - volt)), 1) for volt in
                                                               self.voltage_Value]
-                                        else:
-                                            # self.voltage_Value = [(1023 - elt) / 1023 for elt in self.dataSend]
-                                            self.res_Value = [round(self.R0_val * (volt / (1 - volt)), 1) for volt in
-                                                          self.voltage_Value]
 
-                                    except ZeroDivisionError:
-                                        self.res_Value = [round(self.R0_val * (1 / (volt + 0.1) - 1), 1) for volt in
-                                                          self.voltage_Value]
-                                    # print("Volt : {0}".format(self.voltage_Value))
-                                    # print("Resistance : {0}".format(self.res_Value))
-                                    self.data_read.emit(self.res_Value)
+                                        except ZeroDivisionError:
+                                            self.res_Value = [round(self.R0_val * (1 / (volt + 0.1) - 1), 1) for volt in
+                                                              self.voltage_Value]
+                                        # print("Volt : {0}".format(self.voltage_Value))
+                                        # print("Resistance : {0}".format(self.res_Value))
+                                        self.data_read.emit(self.res_Value)
 
-                                except ValueError:
-                                    print("Value Error")
-                                except IndexError:
-                                    print("IndexError")
-                                finally:
-                                    self.dataflow = " ".join(self.dataList)
-                        except UnicodeDecodeError:
-                            print("UnicodeDecodeError")
+                                    except ValueError:
+                                        print("Value Error")
+                                    except IndexError:
+                                        print("IndexError")
+                                    finally:
+                                        self.dataflow = " ".join(self.dataList)
+                            except UnicodeDecodeError:
+                                print("UnicodeDecodeError")
 
                     else:
                         print('no more data from', client_address)

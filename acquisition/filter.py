@@ -11,7 +11,7 @@ class Filter (QObject):
 
     def __init__(self):
         super().__init__()
-        self.buffer = [deque(2*[0], 2) for i in range(self.num_chan)]
+        self.buffer = [deque(1*[0], 1) for i in range(self.num_chan)]
 
     @pyqtSlot(list)
     def resfilter(self, res_val):

@@ -23,42 +23,134 @@ class Server(QObject):
     state = 0
     polar_0_data = []
     polar_1_data = []
-    voltage_Value = .0
+    voltage_Value = []
     res_Value = .0
     R0_val = 1200.0
 
     def __init__(self):
         super().__init__()
         self.server_address = ('localhost', 12000)
-        self.dataList = []
-        self.dataflow = []
-        self.dataSend = []
 
     def get_raw_value(self, expected):
+        """
+        Unformats the data received through the link
+        
+        The format is divided in 2 parts :
+        bit 0 to 5 are the header, bit 6 to 15 are the data
+        
+        bit 0: polarity of the power supply
+        bit 1: header parity bit
+        bit 2 to 5: channel number
+        bit 6 to 15: data
+        
+        Also checks for errors an manage the finite state machine
+        """
+        temp = 0
+        # print(self.state)
         if len(self.raw_data) == 2:
             temp = unpack('!H', self.raw_data[:2])[0]
+            # print('data : {}'.format(temp >> 10))
             if temp >> 10 == expected:
                 if expected < 30:
-                    self.polar_0_data.append(temp & 64512)
+                    self.polar_0_data.append(temp & 1023)
                 else:
-                    self.polar_1_data.append(temp & 64512)
+                    self.polar_1_data.append(temp & 1023)
                 # print(bin(temp >> 10))
+
                 if self.state == 12 or self.state == 24:
-                    self.state == 0
+                    self.state = 0
                 else:
                     self.state += 1
+                self.raw_data = b''
             else:
                 print("Error")
-                state = 0
-            raw_data = b''
+                self.polar_0_data = []
+                self.polar_1_data = []
+                if temp & 252 == 0:
+                    self.state = 1
+                    self.raw_data = bytes([self.raw_data[1]])
+                elif temp & 252 == 48:
+                    self.state = 13
+                    self.raw_data = bytes([self.raw_data[1]])
+                else:
+                    self.state = 0
+                    self.raw_data = b''
+        else:
+            return
 
+    def send_ready_res(self):
+        """
+        Compute and sent the resistances values when enough values are available
+        """
+        if len(self.polar_0_data) == 12:
+            """ 
+            Buffer of positive polarity complete :
+            Resistance are computed for all 10 channels
+            """
+            print('1')
+            print(self.polar_0_data[:-2])
+            print(self.polar_0_data[-2:])
+            volt_max = max(self.polar_0_data[-2:])
+            volt_min = min(self.polar_0_data[-2:])
+            try:
+                self.voltage_Value = [(elt - volt_min) / (volt_max - volt_min) for elt in
+                                      self.polar_1_data[:-2]]
+            except ZeroDivisionError:
+                print("/!\ WARNING : Equal GPIO voltages")
+                self.voltage_Value = [0.0 for elt in self.polar_1_data[:-2]]
+
+            try:
+                self.res_Value = [round(self.R0_val * (1 / volt - 1), 1) for volt in
+                                  self.voltage_Value]
+
+            except ZeroDivisionError:
+                print("ZeroDivisionError")
+                self.res_Value = []
+                for i in range(len(self.voltage_Value)):
+                    if self.voltage_Value[i] == 0.0:
+                        self.res_Value.append(round(self.R0_val * 100, 1))
+                    else:
+                        self.res_Value.append(round(self.R0_val * (1 / self.voltage_Value[i] - 1), 1))
+
+            # print(self.res_Value)
+            self.data_read.emit(self.res_Value)
+            self.polar_0_data = []
+
+        if len(self.polar_1_data) == 12:
+            """ 
+            Buffer of negative polarity complete :
+            Resistance are computed for all 10 channels
+            """
+            print('2')
+            print(self.polar_1_data[:-2])
+            print(self.polar_1_data[-2:])
+            volt_max = max(self.polar_1_data[-2:])
+            volt_min = min(self.polar_1_data[-2:])
+            try:
+                self.voltage_Value = [(elt - volt_min) / (volt_max - volt_min) for elt in
+                                      self.polar_1_data[:-2]]
+            except ZeroDivisionError:
+                print("/!\ WARNING : Equal GPIO voltages")
+                self.voltage_Value = [0.0 for elt in self.polar_1_data[:-2]]
+            try:
+                self.res_Value = [round(self.R0_val / (1 / volt - 1), 1) for volt in
+                                  self.voltage_Value]
+            except ZeroDivisionError:
+                print("ZeroDivisionError")
+                self.res_Value = []
+                for i in range(len(self.voltage_Value)):
+                    if self.voltage_Value[i] == 1.0 or self.voltage_Value[i] == 0.0:
+                        self.res_Value.append(round(self.R0_val * 100, 1))
+                    else:
+                        self.res_Value.append(round(self.R0_val / (1 / self.voltage_Value[i] - 1), 1))
+
+            # print(self.res_Value)
+            self.data_read.emit(self.res_Value)
+            self.polar_1_data = []
 
     @pyqtSlot()
     def process(self):
-        data = b''
-        values = []
-        temp = 0
-
+        """Main process with actual server functions"""
         print('starting up on %s port %s' % self.server_address)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind(self.server_address)
@@ -71,35 +163,15 @@ class Server(QObject):
                 print('connection from', client_address)
 
                 while True:
-                    if len(self.polar_0_data) == 12:
-                        volt_max = max(self.polar_0_data[-2:])
-                        volt_min = min(self.polar_0_data[-2:])
-                        try:
-                            # elts = [elt/2 + 1241 for elt in self.dataSend[1:4]]
-                            self.voltage_Value = [(elt - volt_min) / (volt_max - volt_min) for elt in
-                                                  self.dataSend[1:-2]]
-                            if self.dataSend.pop(0) == 0:
-                                # self.voltage_Value = [elt / 1023 for elt in self.dataSend]
-                                self.res_Value = [round(self.R0_val * (1 / volt - 1), 1) for volt in
-                                                  self.voltage_Value]
-                            else:
-                                # self.voltage_Value = [(1023 - elt) / 1023 for elt in self.dataSend]
-                                self.res_Value = [round(self.R0_val * (volt / (1 - volt)), 1) for volt in
-                                                  self.voltage_Value]
-
-                        except ZeroDivisionError:
-                            self.res_Value = [round(self.R0_val * (1 / (volt + 0.1) - 1), 1) for volt in
-                                              self.voltage_Value]
-                        # print("Volt : {0}".format(self.voltage_Value))
-                        # print("Resistance : {0}".format(self.res_Value))
-                        self.data_read.emit(self.res_Value)
-                        self.polar_0_data = []
-                    if len(self.polar_1_data) == 12:
-                        self.polar_1_data = []
-
                     data = connection.recv(1)
-                    print('received "%s"' % data)
+                    # print('received "%s"' % data)
                     if data:
+                        """
+                        Finite state machine :
+                        Each state correspond to a specific header 
+                        except state 0 which detect the beginning of a frame A0, A1, etc.
+                        State 12 and state 24 return to state 0
+                        """
                         # detect the starting point
                         if (unpack('!B', data)[0] >> 2) == 0 and self.state == 0:
                             self.raw_data += data
@@ -181,6 +253,8 @@ class Server(QObject):
                         elif self.state == 24:
                             self.raw_data += data
                             self.get_raw_value(43)
+
+                        self.send_ready_res()
                     else:
                         print('no more data from', client_address)
                         break
@@ -190,7 +264,7 @@ class Server(QObject):
                 connection.close()
 
 class Dummy_Client(QObject):
-
+    "Test client : /!\ not working in current version"
     sock = None
     finished = pyqtSignal()
     server_address = ('localhost', 12000)
