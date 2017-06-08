@@ -9,6 +9,9 @@ from queue import Queue
 from PyQt5.QtCore import (QObject, QThread, pyqtSignal, pyqtSlot)
 from PyQt5.QtWidgets import (QApplication)
 
+# --  Benchmarking -- #
+# current_milli_time = lambda: int(round(time.time() * 1000))
+# ------------------  #
 
 class Server(QObject):
     """
@@ -26,6 +29,11 @@ class Server(QObject):
     voltage_Value = []
     res_Value = .0
     R0_val = 1200.0
+
+    # --  Benchmarking -- #
+    # prev_time = cur_time = 0
+    # ------------------  #
+
 
     def __init__(self):
         super().__init__()
@@ -87,21 +95,23 @@ class Server(QObject):
             Buffer of positive polarity complete :
             Resistance are computed for all 10 channels
             """
-            print('1')
-            print(self.polar_0_data[:-2])
-            print(self.polar_0_data[-2:])
+            # print('1')
+            # print(self.polar_0_data[:-2])
+            # print(self.polar_0_data[-2:])
+
             volt_max = max(self.polar_0_data[-2:])
             volt_min = min(self.polar_0_data[-2:])
             try:
                 self.voltage_Value = [(elt - volt_min) / (volt_max - volt_min) for elt in
-                                      self.polar_1_data[:-2]]
+                                      self.polar_0_data[:-2]]
             except ZeroDivisionError:
                 print("/!\ WARNING : Equal GPIO voltages")
-                self.voltage_Value = [0.0 for elt in self.polar_1_data[:-2]]
+                self.voltage_Value = [0.0 for elt in self.polar_0_data[:-2]]
 
             try:
                 self.res_Value = [round(self.R0_val * (1 / volt - 1), 1) for volt in
                                   self.voltage_Value]
+                print(self.res_Value)
 
             except ZeroDivisionError:
                 print("ZeroDivisionError")
@@ -111,19 +121,24 @@ class Server(QObject):
                         self.res_Value.append(round(self.R0_val * 100, 1))
                     else:
                         self.res_Value.append(round(self.R0_val * (1 / self.voltage_Value[i] - 1), 1))
-
-            # print(self.res_Value)
+            print(self.res_Value)
             self.data_read.emit(self.res_Value)
             self.polar_0_data = []
 
-        if len(self.polar_1_data) == 12:
+            # --  Benchmarking -- #
+            # self.cur_time = current_milli_time()
+            # print(self.cur_time - self.prev_time)
+            # self.prev_time = self.cur_time
+            # ------------------  #
+
+        elif len(self.polar_1_data) == 12:
             """ 
             Buffer of negative polarity complete :
             Resistance are computed for all 10 channels
             """
-            print('2')
-            print(self.polar_1_data[:-2])
-            print(self.polar_1_data[-2:])
+            # print('2')
+            # print(self.polar_1_data[:-2])
+            # print(self.polar_1_data[-2:])
             volt_max = max(self.polar_1_data[-2:])
             volt_min = min(self.polar_1_data[-2:])
             try:
@@ -143,10 +158,15 @@ class Server(QObject):
                         self.res_Value.append(round(self.R0_val * 100, 1))
                     else:
                         self.res_Value.append(round(self.R0_val / (1 / self.voltage_Value[i] - 1), 1))
-
             # print(self.res_Value)
             self.data_read.emit(self.res_Value)
             self.polar_1_data = []
+
+            # --  Benchmarking -- #
+            # self.cur_time = current_milli_time()
+            # print(self.cur_time - self.prev_time)
+            # self.prev_time = self.cur_time
+            # ------------------  #
 
     @pyqtSlot()
     def process(self):
