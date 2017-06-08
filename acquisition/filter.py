@@ -9,7 +9,7 @@ current_milli_time = lambda: int(round(time.time() * 1000))
 # ------------------  #
 
 class Filter (QObject):
-    num_chan = 10
+    num_chan = 5
     dataList = []
     filtered = pyqtSignal(list)
 

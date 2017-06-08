@@ -42,7 +42,7 @@ class DynamicGraphCanvas(GraphCanvas):
     scale = 500.0
     offset = -1000.0
     chanIndex = 0
-    numChan = 10
+    numChan = 5
     channelValues = [deque(10000 * [0], 10000) for i in range(numChan)]
 
     def __init__(self, *args, **kwargs):

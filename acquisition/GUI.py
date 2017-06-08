@@ -120,7 +120,7 @@ class MainInterface (QMainWindow) :
         # layout.addRow(QLabel("Frequency"), self.freqSpinBox)
 
         self.channelComboBox = QComboBox()
-        for i in range(10):
+        for i in range(5):
             self.channelComboBox.addItem("%s" % str(i+1))
         layout.addRow(QLabel("Channel"), self.channelComboBox)
 
