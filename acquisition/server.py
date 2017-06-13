@@ -112,7 +112,7 @@ class Server(QObject):
             try:
                 self.res_Value = [round(self.R0_val * (1 / volt - 1), 1) for volt in
                                   self.voltage_Value]
-                print(self.res_Value)
+                # print(self.res_Value)
 
             except ZeroDivisionError:
                 print("ZeroDivisionError")
@@ -122,7 +122,7 @@ class Server(QObject):
                         self.res_Value.append(round(self.R0_val * 100, 1))
                     else:
                         self.res_Value.append(round(self.R0_val * (1 / self.voltage_Value[i] - 1), 1))
-            print(self.res_Value)
+            # print(self.res_Value)
             self.data_read.emit(self.res_Value)
             self.polar_0_data = []
 
