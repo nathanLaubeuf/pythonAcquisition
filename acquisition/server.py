@@ -29,7 +29,7 @@ class Server(QObject):
     polar_1_data = []
     voltage_Value = []
     res_Value = .0
-    R0_val = 1200.0
+    R0_val = 1600.0
 
     # --  Benchmarking -- #
     # prev_time = cur_time = 0
@@ -115,7 +115,7 @@ class Server(QObject):
                 # print(self.res_Value)
 
             except ZeroDivisionError:
-                print("ZeroDivisionError")
+                print("Polar 0 ZeroDivisionError")
                 self.res_Value = []
                 for i in range(len(self.voltage_Value)):
                     if self.voltage_Value[i] == 0.0:
@@ -152,7 +152,7 @@ class Server(QObject):
                 self.res_Value = [round(self.R0_val / (1 / volt - 1), 1) for volt in
                                   self.voltage_Value]
             except ZeroDivisionError:
-                print("ZeroDivisionError")
+                print("Polar 1 ZeroDivisionError")
                 self.res_Value = []
                 for i in range(len(self.voltage_Value)):
                     if self.voltage_Value[i] == 1.0 or self.voltage_Value[i] == 0.0:
