@@ -29,7 +29,7 @@ class Server(QObject):
     polar_1_data = []
     voltage_Value = []
     res_Value = .0
-    R0_val = 1600.0
+    R0_val = 910
 
     # --  Benchmarking -- #
     # prev_time = cur_time = 0
@@ -100,18 +100,17 @@ class Server(QObject):
             # print(self.polar_0_data[:-2])
             # print(self.polar_0_data[-2:])
 
-            volt_max = max(self.polar_0_data[-2:])
-            volt_min = min(self.polar_0_data[-2:])
-            try:
-                self.voltage_Value = [(elt - volt_min) / (volt_max - volt_min) for elt in
-                                      self.polar_0_data[:-2]]
-            except ZeroDivisionError:
-                print("/!\ WARNING : Equal GPIO voltages")
-                self.voltage_Value = [0.0 for elt in self.polar_0_data[:-2]]
+            # volt_max = max(self.polar_0_data[-2:])
+            # volt_min = min(self.polar_0_data[-2:])
+            # try:
+            self.voltage_Value = [elt / 1023 for elt in
+                                      self.polar_0_data]
+            # except ZeroDivisionError:
+            #     print("/!\ WARNING : Equal GPIO voltages")
+            #     self.voltage_Value = [0.0 for elt in self.polar_0_data]
 
             try:
-                self.res_Value = [round(self.R0_val * (1 / volt - 1), 1) for volt in
-                                  self.voltage_Value]
+                self.res_Value = [round(self.R0_val * (1 / volt - 1), 1) for volt in self.voltage_Value]
                 # print(self.res_Value)
 
             except ZeroDivisionError:
@@ -140,14 +139,13 @@ class Server(QObject):
             # print('2')
             # print(self.polar_1_data[:-2])
             # print(self.polar_1_data[-2:])
-            volt_max = max(self.polar_1_data[-2:])
-            volt_min = min(self.polar_1_data[-2:])
-            try:
-                self.voltage_Value = [(elt - volt_min) / (volt_max - volt_min) for elt in
-                                      self.polar_1_data[:-2]]
-            except ZeroDivisionError:
-                print("/!\ WARNING : Equal GPIO voltages")
-                self.voltage_Value = [0.0 for elt in self.polar_1_data[:-2]]
+            # volt_max = max(self.polar_1_data[-2:])
+            # volt_min = min(self.polar_1_data[-2:])
+            # try:
+            self.voltage_Value = [elt / 1023 for elt in self.polar_1_data]
+            # except ZeroDivisionError:
+            #     print("/!\ WARNING : Equal GPIO voltages")
+            #     self.voltage_Value = [0.0 for elt in self.polar_1_data[:-2]]
             try:
                 self.res_Value = [round(self.R0_val / (1 / volt - 1), 1) for volt in
                                   self.voltage_Value]
@@ -216,12 +214,12 @@ class Server(QObject):
                         elif self.state == 5:
                             self.raw_data += data
                             self.get_raw_value(20)
-                        elif self.state == 6:
-                            self.raw_data += data
-                            self.get_raw_value(5)
-                        elif self.state == 7:
-                            self.raw_data += data
-                            self.get_raw_value(6)
+                        # elif self.state == 6:
+                        #     self.raw_data += data
+                        #     self.get_raw_value(5)
+                        # elif self.state == 7:
+                        #     self.raw_data += data
+                        #     self.get_raw_value(6)
                         # elif self.state == 8:
                         #     self.raw_data += data
                         #     self.get_raw_value(23)
@@ -253,12 +251,12 @@ class Server(QObject):
                         elif self.state == 17:
                             self.raw_data += data
                             self.get_raw_value(36)
-                        elif self.state == 18:
-                            self.raw_data += data
-                            self.get_raw_value(53)
-                        elif self.state == 19:
-                            self.raw_data += data
-                            self.get_raw_value(54)
+                        # elif self.state == 18:
+                        #     self.raw_data += data
+                        #     self.get_raw_value(53)
+                        # elif self.state == 19:
+                        #     self.raw_data += data
+                        #     self.get_raw_value(54)
                         # elif self.state == 20:
                         #     self.raw_data += data
                         #     self.get_raw_value(39)
