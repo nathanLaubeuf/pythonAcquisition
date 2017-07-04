@@ -66,7 +66,7 @@ class Server(QObject):
                     self.polar_1_data.append(temp & 1023)
                 # print(bin(temp >> 10))
 
-                if self.state == 7 or self.state == 19:
+                if self.state == 5 or self.state == 17:
                     self.state = 0
                 else:
                     self.state += 1
@@ -91,20 +91,19 @@ class Server(QObject):
         """
         Compute and sent the resistances values when enough values are available
         """
-        if len(self.polar_0_data) == 7:
+        if len(self.polar_0_data) == 5:
             """ 
             Buffer of positive polarity complete :
             Resistance are computed for all 10 channels
             """
             # print('1')
-            # print(self.polar_0_data[:-2])
+            print(self.polar_0_data)
             # print(self.polar_0_data[-2:])
 
             # volt_max = max(self.polar_0_data[-2:])
             # volt_min = min(self.polar_0_data[-2:])
             # try:
-            self.voltage_Value = [elt / 1023 for elt in
-                                      self.polar_0_data]
+            self.voltage_Value = [elt / 1023 for elt in self.polar_0_data]
             # except ZeroDivisionError:
             #     print("/!\ WARNING : Equal GPIO voltages")
             #     self.voltage_Value = [0.0 for elt in self.polar_0_data]
@@ -131,13 +130,13 @@ class Server(QObject):
             # self.prev_time = self.cur_time
             # ------------------  #
 
-        elif len(self.polar_1_data) == 7:
+        elif len(self.polar_1_data) == 5:
             """ 
             Buffer of negative polarity complete :
             Resistance are computed for all 10 channels
             """
             # print('2')
-            # print(self.polar_1_data[:-2])
+            print(self.polar_1_data)
             # print(self.polar_1_data[-2:])
             # volt_max = max(self.polar_1_data[-2:])
             # volt_min = min(self.polar_1_data[-2:])
