@@ -29,7 +29,8 @@ class Server(QObject):
     polar_1_data = []
     voltage_Value = []
     res_Value = .0
-    R0_val = 2700.0
+    R0_val = 910.0
+    next_polar = 0
 
     # --  Benchmarking -- #
     # prev_time = cur_time = 0
@@ -58,7 +59,7 @@ class Server(QObject):
         # print(self.state)
         if len(self.raw_data) == 2:
             temp = unpack('!H', self.raw_data[:2])[0]
-            # print('data : {}'.format(temp >> 10))
+            print('data : {}, {}'.format(temp >> 10, temp & 1023))
             if temp >> 10 == expected:
                 if expected < 30:
                     self.polar_0_data.append(temp & 1023)
@@ -66,13 +67,13 @@ class Server(QObject):
                     self.polar_1_data.append(temp & 1023)
                 # print(bin(temp >> 10))
 
-                if self.state == 12 or self.state == 24:
+                if self.state == 10 or self.state == 22:
                     self.state = 0
                 else:
                     self.state += 1
                 self.raw_data = b''
             else:
-                print("Error")
+                print("Error : state {}".format(self.state))
                 self.polar_0_data = []
                 self.polar_1_data = []
                 if temp & 252 == 0:
@@ -91,7 +92,7 @@ class Server(QObject):
         """
         Compute and sent the resistances values when enough values are available
         """
-        if len(self.polar_0_data) == 12:
+        if len(self.polar_0_data) == 10:
             """ 
             Buffer of positive polarity complete :
             Resistance are computed for all 10 channels
@@ -100,19 +101,13 @@ class Server(QObject):
             # print(self.polar_0_data[:-2])
             # print(self.polar_0_data[-2:])
 
-            volt_max = max(self.polar_0_data[-2:])
-            volt_min = min(self.polar_0_data[-2:])
-            try:
-                self.voltage_Value = [(elt - volt_min) / (volt_max - volt_min) for elt in
-                                      self.polar_0_data[:-2]]
-            except ZeroDivisionError:
-                print("/!\ WARNING : Equal GPIO voltages")
-                self.voltage_Value = [0.0 for elt in self.polar_0_data[:-2]]
-
+            # volt_max = max(self.polar_0_data[-2:])
+            # volt_min = min(self.polar_0_data[-2:])
+            self.voltage_Value = [elt / 1023 for elt in self.polar_0_data]
             try:
                 self.res_Value = [round(self.R0_val * (1 / volt - 1), 1) for volt in
                                   self.voltage_Value]
-                print(self.res_Value)
+                # print(self.res_Value)
 
             except ZeroDivisionError:
                 print("ZeroDivisionError")
@@ -122,7 +117,7 @@ class Server(QObject):
                         self.res_Value.append(round(self.R0_val * 100, 1))
                     else:
                         self.res_Value.append(round(self.R0_val * (1 / self.voltage_Value[i] - 1), 1))
-            print(self.res_Value)
+            # print(self.res_Value)
             self.data_read.emit(self.res_Value)
             self.polar_0_data = []
 
@@ -132,7 +127,7 @@ class Server(QObject):
             # self.prev_time = self.cur_time
             # ------------------  #
 
-        elif len(self.polar_1_data) == 12:
+        elif len(self.polar_1_data) == 10:
             """ 
             Buffer of negative polarity complete :
             Resistance are computed for all 10 channels
@@ -140,14 +135,11 @@ class Server(QObject):
             # print('2')
             # print(self.polar_1_data[:-2])
             # print(self.polar_1_data[-2:])
-            volt_max = max(self.polar_1_data[-2:])
-            volt_min = min(self.polar_1_data[-2:])
-            try:
-                self.voltage_Value = [(elt - volt_min) / (volt_max - volt_min) for elt in
-                                      self.polar_1_data[:-2]]
-            except ZeroDivisionError:
-                print("/!\ WARNING : Equal GPIO voltages")
-                self.voltage_Value = [0.0 for elt in self.polar_1_data[:-2]]
+            # volt_max = max(self.polar_1_data[-2:])
+            # volt_min = min(self.polar_1_data[-2:])
+
+            self.voltage_Value = [elt/1023 for elt in self.polar_1_data]
+
             try:
                 self.res_Value = [round(self.R0_val / (1 / volt - 1), 1) for volt in
                                   self.voltage_Value]
@@ -185,6 +177,7 @@ class Server(QObject):
 
                 while True:
                     data = connection.recv(1)
+
                     # print('received "%s"' % data)
                     if data:
                         """
@@ -194,12 +187,14 @@ class Server(QObject):
                         State 12 and state 24 return to state 0
                         """
                         # detect the starting point
-                        if (unpack('!B', data)[0] >> 2) == 0 and self.state == 0:
+                        if (unpack('!B', data)[0] >> 2) == 0 and self.state == 0 and self.next_polar == 0:
                             self.raw_data += data
                             self.state = 1
-                        elif (unpack('!B', data)[0] >> 2) == 48 and self.state == 0:
+                            self.next_polar = 1
+                        elif (unpack('!B', data)[0] >> 2) == 48 and self.state == 0 and self.next_polar == 1:
                             self.raw_data += data
                             self.state = 13
+                            self.next_polar = 0
 
                         elif self.state == 1:
                             self.raw_data += data
@@ -231,12 +226,12 @@ class Server(QObject):
                         elif self.state == 10:
                             self.raw_data += data
                             self.get_raw_value(9)
-                        elif self.state == 11:
-                            self.raw_data += data
-                            self.get_raw_value(10)
-                        elif self.state == 12:
-                            self.raw_data += data
-                            self.get_raw_value(27)
+                        # elif self.state == 11:
+                        #     self.raw_data += data
+                        #     self.get_raw_value(10)
+                        # elif self.state == 12:
+                        #     self.raw_data += data
+                        #     self.get_raw_value(27)
 
                         elif self.state == 13:
                             self.raw_data += data
@@ -268,12 +263,12 @@ class Server(QObject):
                         elif self.state == 22:
                             self.raw_data += data
                             self.get_raw_value(57)
-                        elif self.state == 23:
-                            self.raw_data += data
-                            self.get_raw_value(58)
-                        elif self.state == 24:
-                            self.raw_data += data
-                            self.get_raw_value(43)
+                        # elif self.state == 23:
+                        #     self.raw_data += data
+                        #     self.get_raw_value(58)
+                        # elif self.state == 24:
+                        #     self.raw_data += data
+                        #     self.get_raw_value(43)
 
                         self.send_ready_res()
                     else:
