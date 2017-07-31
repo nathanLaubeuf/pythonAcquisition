@@ -33,11 +33,18 @@ class AppManager(QObject):
         self.connectGuiEvents()
 
         self.producer.data_read.connect(self.filter.resfilter)
+
+        """
+        The processed values are accessible by connecting to the filtered.connect signal
+        """
+
         self.filter.filtered.connect(self.gui.monitorGraph.update_queue)
+        self.filter.filtered.connect(self.gui.updateRLabel)
         self.thread.start()
 
 
     def connectGuiEvents(self):
+        """ Connect GUI events to back end """
         self.gui.startButton.clicked.connect(self.startButtonHandle)
         self.gui.recordButton.clicked.connect(self.recordButtonHandle)
         self.gui.grphNumSampleSpinBox.valueChanged.connect(self.gui.monitorGraph.setNumSample)

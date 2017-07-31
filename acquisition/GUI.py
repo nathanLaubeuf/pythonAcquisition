@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (QMainWindow,
                              QLabel, QSpinBox, QComboBox,
                              QDoubleSpinBox)
 from PyQt5.QtGui import (QKeySequence)
+from PyQt5.QtCore import Qt
 from acquisition.mygraphs import *
 from acquisition.repo_select import RepoSelect
 
@@ -44,6 +45,7 @@ class MainInterface (QMainWindow) :
     # Importing widgets to layout
         self.create_Graphs()
         self.centralWidgetLayout.addWidget(self.graphsBox, 0, 0)
+
         self.create_Control()
         self.centralWidgetLayout.addWidget(self.controlBox, 0, 1)
         self.centralWidget.setLayout(self.centralWidgetLayout)
@@ -61,6 +63,9 @@ class MainInterface (QMainWindow) :
     def chanChange(self):
         self.chanChangeSig.emit(self.channelComboBox.currentIndex())
 
+    @pyqtSlot(list)
+    def updateRLabel(self, next_value):
+        self.R_value_label.setText("R = {0:.2f}".format(next_value[self.channelComboBox.currentIndex()]))
 
     def center(self):
         """centering the main window"""
@@ -93,11 +98,21 @@ class MainInterface (QMainWindow) :
         self.startButton.setMaximumWidth(180)
         controlBoxLayout.addWidget(self.startButton)
 
+        self.calibrateButton = QPushButton()
+        self.calibrateButton.setText("Calibrate")
+        self.calibrateButton.setCheckable(True)
+        self.calibrateButton.setMaximumWidth(180)
+        controlBoxLayout.addWidget(self.calibrateButton)
+
         self.recordButton = QPushButton()
         self.recordButton.setText("Record")
         self.recordButton.setCheckable(True)
         self.recordButton.setMaximumWidth(180)
         controlBoxLayout.addWidget(self.recordButton)
+
+        self.R_value_label = QLabel("R = 0.0")
+        self.R_value_label.setAlignment(Qt.AlignCenter)
+        controlBoxLayout.addWidget(self.R_value_label)
 
         self.create_simu_pilot()
         self.simuPilot.resize(100, 250)
