@@ -43,6 +43,8 @@ class DynamicGraphCanvas(GraphCanvas):
     offset = -1000.0
     chanIndex = 0
     numChan = 10
+    freq = 44
+    time = - numSample
     channelValues = [deque(10000 * [0], 10000) for i in range(numChan)]
 
     def __init__(self, *args, **kwargs):
@@ -57,9 +59,9 @@ class DynamicGraphCanvas(GraphCanvas):
         y_achse = array([.0] * self.numSample)
         self.ax.grid(True)
         self.ax.set_title("Real time Waveform Plot")
-        self.ax.set_xlabel("Time")
-        self.ax.set_ylabel("Amplitude")
-        self.ax.axis([0, self.numSample, self.minValue, self.maxValue])
+        self.ax.set_xlabel("Time (sec)")
+        self.ax.set_ylabel("Amplitude (Ohm)")
+        self.ax.axis([-self.numSample/self.freq, 0, self.minValue, self.maxValue])
         #self.manager = get_current_fig_manager()
         self.line1 = self.ax.plot(x_achse, y_achse, '-')
 
@@ -70,7 +72,7 @@ class DynamicGraphCanvas(GraphCanvas):
     @pyqtSlot()
     def update_figure(self):
         """Updates the graph"""
-        self.CurrentXAxis = arange(0, self.numSample, 1)
+        self.CurrentXAxis = arange(self.time, self.time + self.numSample, 1)/self.freq
         self.line1[0].set_data(self.CurrentXAxis, array(list(self.channelValues[self.chanIndex])[-self.numSample:]))
         self.ax.axis([self.CurrentXAxis.min(), self.CurrentXAxis.max(), self.minValue, self.maxValue])
         self.fig.canvas.draw()
@@ -87,6 +89,7 @@ class DynamicGraphCanvas(GraphCanvas):
         #  print("%s" % str(list(self.values)[-1]))
         self.counter += 1
         if self.counter >= 5:
+            self.time += 5
             self.figUpdate.emit()
             self.counter = 0
 
@@ -117,3 +120,4 @@ class DynamicGraphCanvas(GraphCanvas):
     @pyqtSlot()
     def clearGraph(self):
         self.channelValues = [deque(10000 * [0], 10000) for i in range(self.numChan)]
+        self.time = - self.numSample
