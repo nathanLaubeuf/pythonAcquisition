@@ -7,7 +7,8 @@ from PyQt5.QtCore import (pyqtSlot, QObject, QThread)
 from PyQt5.QtWidgets import (QApplication)
 from acquisition.server import Server
 from acquisition.file_writer import FileWriter
-from acquisition.filter import  Filter
+from acquisition.calibration import ExCaliber
+from acquisition.filter import Filter
 
 matplotlib.use("Qt5Agg")
 
@@ -20,6 +21,7 @@ class AppManager(QObject):
         self.thread = QThread()
         self.producer = Server()
         self.filter = Filter()
+
         self.uartProcess = None
 
         self.producer.moveToThread(self.thread)
@@ -29,6 +31,8 @@ class AppManager(QObject):
         self.thread.finished.connect(self.thread.deleteLater)
 
         self.fileWriter = FileWriter()
+
+        self.calibrator = ExCaliber()
 
         self.connectGuiEvents()
 
@@ -45,6 +49,7 @@ class AppManager(QObject):
         """ Connect GUI events to back end """
         self.gui.startButton.clicked.connect(self.startButtonHandle)
         self.gui.recordButton.clicked.connect(self.recordButtonHandle)
+        self.gui.calibrateButton.clicked.connect(self.calibrateButtonHandle)
         self.gui.grphNumSampleSpinBox.valueChanged.connect(self.gui.monitorGraph.setNumSample)
         self.gui.grphScaleDoubleSpinBox.valueChanged.connect(self.gui.monitorGraph.scaleUpdate)
         self.gui.grphOffsetDoubleSpinBox.valueChanged.connect(self.gui.monitorGraph.offsetUpdate)
@@ -52,6 +57,7 @@ class AppManager(QObject):
         self.gui.sessionSpinBox.valueChanged.connect(self.fileWriter.setSessionNum)
         self.gui.testSpinBox.valueChanged.connect(self.fileWriter.setTestNum)
         self.gui.workingDirSelect.valueChanged.connect(self.fileWriter.setWorkDir)
+        self.gui.chanChangeSig.connect(self.calibrator.channel_change)
 
 
     @pyqtSlot()
@@ -67,6 +73,22 @@ class AppManager(QObject):
             if self.gui.recordButton.isChecked():
                 self.fileWriter.stopRecord()
                 self.gui.recordButton.setChecked(False)
+            if self.gui.calibrateButton.isChecked():
+                self.calibrator.stop_calib()
+                self.filter.filtered.disconnect(self.calibrator.stretch_res_handle)
+                self.gui.calibrateButton.setChecked(False)
+
+    @pyqtSlot()
+    def calibrateButtonHandle(self):
+        if self.gui.calibrateButton.isChecked():
+            if self.gui.startButton.isChecked():
+                self.calibrator.start_calib()
+                self.filter.filtered.connect(self.calibrator.stretch_res_handle)
+            else:
+                self.gui.calibrateButton.setChecked(False)
+        else:
+            self.calibrator.stop_calib()
+            self.filter.filtered.disconnect(self.calibrator.stretch_res_handle)
 
     @pyqtSlot()
     def recordButtonHandle(self):
