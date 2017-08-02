@@ -8,6 +8,7 @@ from PyQt5.QtCore import (QObject, QThread, pyqtSignal, pyqtSlot)
 current_milli_time = lambda: int(round(time.time() * 1000))
 # ------------------  #
 
+
 class Filter (QObject):
     num_chan = 10
     dataList = []

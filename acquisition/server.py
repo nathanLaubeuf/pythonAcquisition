@@ -278,6 +278,7 @@ class Server(QObject):
             finally:
                 # Clean up the connection
                 connection.close()
+                self.finished.emit()
 
 
 class Dummy_Client(QObject):
