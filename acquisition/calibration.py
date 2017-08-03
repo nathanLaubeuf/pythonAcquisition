@@ -2,14 +2,20 @@ from PyQt5.QtCore import (QObject, pyqtSlot, pyqtSignal, QThread)
 from PyQt5.QtWidgets import (QApplication)
 from serial import *
 from threading import Timer
+import csv
 
 class ExCaliber(QObject):
 
     def __init__(self):
         super().__init__()
 
+        self.thread = None
+        self.ser_conn = None
         self.angle = None
         self.channel = 0
+        self.file_name = 'calibration.csv'
+        self.file = None
+        self.writer = None
 
     @pyqtSlot()
     def start_calib(self):
@@ -20,16 +26,22 @@ class ExCaliber(QObject):
         self.ser_conn.finished.connect(self.thread.quit)
         self.ser_conn.finished.connect(self.ser_conn.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
-
         self.ser_conn.data_read.connect(self.imu_angle_handle)
         self.angle = None
-        print('Start calib')
+        print('Start calibration')
+        if os.path.isfile(self.file_name):
+            raise FileExistsError
+        else:
+            self.file = open(self.file_name, 'w')
+            self.writer = csv.writer(self.file, delimiter=';',
+                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
         self.thread.start()
 
     @pyqtSlot()
     def stop_calib(self):
         print('Stop calib')
         self.ser_conn.stop_serial()
+        self.file.close()
         # app.quit() # Uncomment for a non locking example
 
     @pyqtSlot(float)
@@ -42,6 +54,7 @@ class ExCaliber(QObject):
         if self.angle is not None:
             angle_vs_res = self.angle, res[self.channel]
             print(angle_vs_res)
+            self.writer.writerow(angle_vs_res)
 
     @pyqtSlot(int)
     def channel_change(self, chan):
