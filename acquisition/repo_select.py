@@ -31,8 +31,9 @@ class RepoSelect(QWidget):
     @pyqtSlot()
     def dirHandler(self):
         self.repoName = QFileDialog.getExistingDirectory(self, 'Select directory')
-        self.folderNameLine.setText(self.repoName)
-        self.valueChanged.emit(self.repoName)
+        if self.repoName != '' and self.repoName is not None:
+            self.folderNameLine.setText(self.repoName)
+            self.valueChanged.emit(self.repoName)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv) #define a Qt application

@@ -58,6 +58,7 @@ class AppManager(QObject):
         self.gui.testSpinBox.valueChanged.connect(self.fileWriter.setTestNum)
         self.gui.workingDirSelect.valueChanged.connect(self.fileWriter.setWorkDir)
         self.gui.chanChangeSig.connect(self.calibrator.channel_change)
+        self.gui.serialComboBox.activated[str].connect(self.calibrator.set_calib_serial)
 
 
     @pyqtSlot()
@@ -84,11 +85,14 @@ class AppManager(QObject):
             if self.gui.startButton.isChecked():
                 self.calibrator.start_calib()
                 self.filter.filtered.connect(self.calibrator.stretch_res_handle)
+                self.gui.channelComboBox.setEnabled(False)
             else:
                 self.gui.calibrateButton.setChecked(False)
         else:
             self.calibrator.stop_calib()
+            self.gui.channelComboBox.setEnabled(True)
             self.filter.filtered.disconnect(self.calibrator.stretch_res_handle)
+
 
     @pyqtSlot()
     def recordButtonHandle(self):

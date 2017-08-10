@@ -13,14 +13,15 @@ class ExCaliber(QObject):
         self.ser_conn = None
         self.angle = None
         self.channel = 0
-        self.file_name = 'calibration.csv'
+        self.file_name = 'calibrations/calibration_0.csv'
+        self.calib_serial = ''
         self.file = None
         self.writer = None
 
     @pyqtSlot()
     def start_calib(self):
         self.thread = QThread()
-        self.ser_conn = SerialCon()
+        self.ser_conn = SerialCon(self.calib_serial)
         self.ser_conn.moveToThread(self.thread)
         self.thread.started.connect(self.ser_conn.process)
         self.ser_conn.finished.connect(self.thread.quit)
@@ -29,12 +30,9 @@ class ExCaliber(QObject):
         self.ser_conn.data_read.connect(self.imu_angle_handle)
         self.angle = None
         print('Start calibration')
-        if os.path.isfile(self.file_name):
-            raise FileExistsError
-        else:
-            self.file = open(self.file_name, 'w')
-            self.writer = csv.writer(self.file, delimiter=';',
-                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        self.file = open(self.file_name, 'w')
+        self.writer = csv.writer(self.file, delimiter=';',
+                                          quotechar='|', quoting=csv.QUOTE_MINIMAL)
         self.thread.start()
 
     @pyqtSlot()
@@ -58,22 +56,29 @@ class ExCaliber(QObject):
 
     @pyqtSlot(int)
     def channel_change(self, chan):
+        self.file_name = "calibrations/calibrations_{}.csv".format(chan)
         self.channel = chan
+
+    @pyqtSlot(str)
+    def set_calib_serial(self, serial_name):
+        self.calib_serial = serial_name
 
 
 class SerialCon(QObject):
 
     data_read = pyqtSignal(float)
     finished = pyqtSignal()
+    calib_serial = ''
     run = True
 
-    def __init__(self):
+    def __init__(self, serial_name):
         super().__init__()
+        self.calib_serial = serial_name
 
     def start_serial(self):
         print('Start Serial')
         try:
-            self.ser = Serial('/dev/cu.usbmodem1421', 38400, timeout=5)  # open serial port
+            self.ser = Serial(self.calib_serial, 38400, timeout=5)  # open serial port
         except self.ser.SerialException as e:
             print("could not open serial port '{}': {}".format('/dev/cu.usbmodem1421', e))
         print(self.ser.name)  # check which port was really used
@@ -86,7 +91,6 @@ class SerialCon(QObject):
 
     def stop_serial(self):
         self.run = False
-
 
     @pyqtSlot()
     def process(self):
