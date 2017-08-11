@@ -34,7 +34,7 @@ class MainInterface (QMainWindow) :
         self.shortcutW.activated.connect(qApp.quit)
 
     # Setting up size
-        self.setFixedSize(1020, 600)
+        self.setFixedSize(1020, 620)
         self.center()
         self.setWindowTitle('HandTrack')
 
@@ -117,6 +117,10 @@ class MainInterface (QMainWindow) :
         self.R_value_label.setAlignment(Qt.AlignCenter)
         controlBoxLayout.addWidget(self.R_value_label)
 
+        self.A_value_label = QLabel("Angle = -")
+        self.A_value_label.setAlignment(Qt.AlignCenter)
+        controlBoxLayout.addWidget(self.A_value_label)
+
         self.create_session_pilot()
         self.sessionPilot.resize(100, 250)
         controlBoxLayout.addWidget(self.sessionPilot)
@@ -189,10 +193,13 @@ class MainInterface (QMainWindow) :
     def updateRLabel(self, next_value):
         self.R_value_label.setText("R = {0:.2f}".format(next_value[self.channelComboBox.currentIndex()]))
 
+    @pyqtSlot(float)
+    def updateALabel(self, angle):
+        self.A_value_label.setText("Angle = {0:.2f}".format(angle))
+
     @pyqtSlot()
     def seriral_interface_chosen(self):
         self.calibrateButton.setEnabled(True)
-        self.serialComboBox.clicked.disconnect(self.seriral_interface_chosen)
 
     @pyqtSlot()
     def dir_chosen(self):

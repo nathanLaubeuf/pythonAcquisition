@@ -8,6 +8,7 @@ import csv
 
 class ExCaliber(QObject):
     calib_stopped = pyqtSignal()
+    new_angle = pyqtSignal(float)
 
     def __init__(self):
         super().__init__()
@@ -23,13 +24,11 @@ class ExCaliber(QObject):
 
     @pyqtSlot()
     def start_calib(self):
-        self.ser_conn.data_read.connect(self.imu_angle_handle)
         self.angle = None
         print('Start calibration')
         self.file = open(self.file_name, 'w')
         self.writer = csv.writer(self.file, delimiter=';',
                                           quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        self.thread.start()
 
     @pyqtSlot()
     def stop_calib(self):
@@ -44,6 +43,7 @@ class ExCaliber(QObject):
     @pyqtSlot(float)
     def imu_angle_handle(self, angle):
         self.angle = angle
+        self.new_angle.emit(angle)
         # print("angle = {}".format(angle))
 
     @pyqtSlot(list)
@@ -71,10 +71,14 @@ class ExCaliber(QObject):
         self.ser_conn.finished.connect(self.thread.quit)
         self.ser_conn.finished.connect(self.ser_conn.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
-        self.ser_conn.finished.connect(self.propagate_serial_closed)
+        self.ser_conn.no_serial.connect(self.propagate_no_serial)
+        self.ser_conn.data_read.connect(self.imu_angle_handle)
+        self.thread.start()
+
 
     @pyqtSlot()
-    def propagate_serial_closed(self):
+    def propagate_no_serial(self):
+        self.calib_serial = ''
         self.calib_stopped.emit()
 
 
@@ -82,6 +86,7 @@ class SerialCon(QObject):
 
     data_read = pyqtSignal(float)
     finished = pyqtSignal()
+    no_serial = pyqtSignal()
     calib_serial = ''
     run = True
 
@@ -93,8 +98,8 @@ class SerialCon(QObject):
         print('Start Serial')
         try:
             self.ser = Serial(self.calib_serial, 38400, timeout=5)  # open serial port
-        except self.ser.SerialException as e:
-            print("could not open serial port '{}': {}".format('/dev/cu.usbmodem1421', e))
+        except SerialException:
+            self.no_serial.emit()
         print(self.ser.name)  # check which port was really used
 
         if self.ser.is_open:
@@ -108,19 +113,22 @@ class SerialCon(QObject):
 
     @pyqtSlot()
     def process(self):
-        self.start_serial()
-        while self.run:
-            try:
-                line = self.ser.readline()
-            except OSError:
-                print('Serial disconnected')
-
-                break
-            if len(line) != 0:
-                # print(float(line))
-                self.data_read.emit(float(line))
-        self.ser.close()
-        print('Serial closed')
+        try:
+            self.start_serial()
+            while self.run:
+                try:
+                    line = self.ser.readline()
+                except OSError:
+                    print('Serial disconnected')
+                    self.no_serial.emit()
+                    break
+                if len(line) != 0:
+                    # print(float(line))
+                    self.data_read.emit(float(line))
+            self.ser.close()
+            print('Serial closed')
+        except AttributeError:
+            self.no_serial.emit()
         self.finished.emit()
         return
 

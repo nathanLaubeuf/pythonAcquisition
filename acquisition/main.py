@@ -33,7 +33,8 @@ class AppManager(QObject):
         self.fileWriter = FileWriter()
 
         self.calibrator = ExCaliber()
-        self.calibrator.calib_stopped.connect(self.calib_stoped_handle)
+        self.calibrator.calib_stopped.connect(self.no_serial_handle)
+        self.calibrator.new_angle.connect(self.gui.updateALabel)
 
         self.connectGuiEvents()
 
@@ -94,12 +95,20 @@ class AppManager(QObject):
             self.calibrator.stop_calib()
             self.gui.channelComboBox.setEnabled(True)
             self.filter.filtered.disconnect(self.calibrator.stretch_res_handle)
+            self.gui.A_value_label.setText('Angle = -')
 
     @pyqtSlot()
-    def calib_stoped_handle(self):
+    def no_serial_handle(self):
         self.gui.channelComboBox.setEnabled(True)
-        self.filter.filtered.disconnect(self.calibrator.stretch_res_handle)
+        self.gui.calibrateButton.setEnabled(False)
+        try:
+            self.filter.filtered.disconnect(self.calibrator.stretch_res_handle)
+        except:
+            print('Serial disconnected normally')
         self.gui.calibrateButton.setChecked(False)
+        self.gui.serialComboBox.addItem('')
+        self.gui.serialComboBox.setCurrentIndex(-1)
+        self.gui.A_value_label.setText('Angle = -')
 
     @pyqtSlot()
     def recordButtonHandle(self):
