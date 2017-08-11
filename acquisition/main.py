@@ -33,6 +33,7 @@ class AppManager(QObject):
         self.fileWriter = FileWriter()
 
         self.calibrator = ExCaliber()
+        self.calibrator.calib_stopped.connect(self.calib_stoped_handle)
 
         self.connectGuiEvents()
 
@@ -59,6 +60,7 @@ class AppManager(QObject):
         self.gui.workingDirSelect.valueChanged.connect(self.fileWriter.setWorkDir)
         self.gui.chanChangeSig.connect(self.calibrator.channel_change)
         self.gui.serialComboBox.activated[str].connect(self.calibrator.set_calib_serial)
+
 
 
     @pyqtSlot()
@@ -93,6 +95,11 @@ class AppManager(QObject):
             self.gui.channelComboBox.setEnabled(True)
             self.filter.filtered.disconnect(self.calibrator.stretch_res_handle)
 
+    @pyqtSlot()
+    def calib_stoped_handle(self):
+        self.gui.channelComboBox.setEnabled(True)
+        self.filter.filtered.disconnect(self.calibrator.stretch_res_handle)
+        self.gui.calibrateButton.setChecked(False)
 
     @pyqtSlot()
     def recordButtonHandle(self):

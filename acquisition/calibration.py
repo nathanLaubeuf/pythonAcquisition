@@ -7,6 +7,7 @@ import csv
 
 
 class ExCaliber(QObject):
+    calib_stopped = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -70,6 +71,11 @@ class ExCaliber(QObject):
         self.ser_conn.finished.connect(self.thread.quit)
         self.ser_conn.finished.connect(self.ser_conn.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
+        self.ser_conn.finished.connect(self.propagate_serial_closed)
+
+    @pyqtSlot()
+    def propagate_serial_closed(self):
+        self.calib_stopped.emit()
 
 
 class SerialCon(QObject):
@@ -108,6 +114,7 @@ class SerialCon(QObject):
                 line = self.ser.readline()
             except OSError:
                 print('Serial disconnected')
+
                 break
             if len(line) != 0:
                 # print(float(line))
