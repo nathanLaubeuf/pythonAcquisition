@@ -4,6 +4,8 @@ from serial import *
 from threading import Timer
 import csv
 
+
+
 class ExCaliber(QObject):
 
     def __init__(self):
@@ -20,13 +22,6 @@ class ExCaliber(QObject):
 
     @pyqtSlot()
     def start_calib(self):
-        self.thread = QThread()
-        self.ser_conn = SerialCon(self.calib_serial)
-        self.ser_conn.moveToThread(self.thread)
-        self.thread.started.connect(self.ser_conn.process)
-        self.ser_conn.finished.connect(self.thread.quit)
-        self.ser_conn.finished.connect(self.ser_conn.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
         self.ser_conn.data_read.connect(self.imu_angle_handle)
         self.angle = None
         print('Start calibration')
@@ -38,7 +33,10 @@ class ExCaliber(QObject):
     @pyqtSlot()
     def stop_calib(self):
         print('Stop calib')
-        self.ser_conn.stop_serial()
+        try:
+            self.ser_conn.data_read.disconnect(self.imu_angle_handle)
+        except RuntimeError:
+            print('Serial connection already closed')
         self.file.close()
         # app.quit() # Uncomment for a non locking example
 
@@ -61,7 +59,17 @@ class ExCaliber(QObject):
 
     @pyqtSlot(str)
     def set_calib_serial(self, serial_name):
+        if self.thread is not None:
+            self.ser_conn.stop_serial()
+
         self.calib_serial = serial_name
+        self.thread = QThread()
+        self.ser_conn = SerialCon(self.calib_serial)
+        self.ser_conn.moveToThread(self.thread)
+        self.thread.started.connect(self.ser_conn.process)
+        self.ser_conn.finished.connect(self.thread.quit)
+        self.ser_conn.finished.connect(self.ser_conn.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
 
 
 class SerialCon(QObject):
@@ -96,12 +104,14 @@ class SerialCon(QObject):
     def process(self):
         self.start_serial()
         while self.run:
-            line = self.ser.readline()
+            try:
+                line = self.ser.readline()
+            except OSError:
+                print('Serial disconnected')
+                break
             if len(line) != 0:
                 # print(float(line))
                 self.data_read.emit(float(line))
-
-
         self.ser.close()
         print('Serial closed')
         self.finished.emit()
