@@ -76,6 +76,8 @@ class AppManager(QObject):
             self.gui.statusBar().showMessage('Ready')
             if self.gui.recordButton.isChecked():
                 self.fileWriter.stopRecord()
+                self.filter.filtered.disconnect(self.fileWriter.writeValue)
+                self.gui.recordButton.clicked.disconnect(self.fileWriter.stopRecord)
                 self.gui.recordButton.setChecked(False)
             if self.gui.calibrateButton.isChecked():
                 self.calibrator.stop_calib()

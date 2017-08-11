@@ -33,10 +33,10 @@ class ExCaliber(QObject):
     @pyqtSlot()
     def stop_calib(self):
         print('Stop calib')
-        try:
-            self.ser_conn.data_read.disconnect(self.imu_angle_handle)
-        except RuntimeError:
-            print('Serial connection already closed')
+        # try:
+        #     self.ser_conn.data_read.disconnect(self.imu_angle_handle)
+        # except RuntimeError:
+        #     print('Serial connection already closed')
         self.file.close()
         # app.quit() # Uncomment for a non locking example
 
