@@ -7,7 +7,6 @@ import socket
 import time
 import signal
 import sys
-import sys
 
 # /!\ Only works in python2.7
 # Try to make exit more graceful : http://stackoverflow.com/questions/18499497/how-to-process-sigterm-signal-gracefully
@@ -63,7 +62,7 @@ def main():
         adapter.start_scan()
         # Search for the first UART device found (will time out after 60 seconds
         # but you can specify an optional timeout_sec parameter to change it).
-        while notFound: # Only connects to desired device
+        while notFound:  # Only connects to desired device
             devices = UART.find_devices()
             for deviceIter in devices:
                 if deviceIter.name == "Adafruit Bluefruit LE":
@@ -99,7 +98,7 @@ def main():
         print('Waiting up to 60 seconds to receive data from the device...')
         received = uart.read(timeout_sec=60)
         while received is not None:
-            print('Received: {0}'.format(received))
+            # print('Received: {0}'.format(received))
             sock.sendall(received)
             received = uart.read(timeout_sec=60)
         print('End of transmission')

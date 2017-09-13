@@ -6,8 +6,10 @@ from PyQt5.QtWidgets import (QMainWindow,
                              QLabel, QSpinBox, QComboBox,
                              QDoubleSpinBox)
 from PyQt5.QtGui import (QKeySequence)
+from PyQt5.QtCore import Qt
 from acquisition.mygraphs import *
 from acquisition.repo_select import RepoSelect
+import serial.tools.list_ports
 
 """
 -----------------------------------------------------------------------------
@@ -32,7 +34,7 @@ class MainInterface (QMainWindow) :
         self.shortcutW.activated.connect(qApp.quit)
 
     # Setting up size
-        self.setFixedSize(1020, 600)
+        self.setFixedSize(1020, 620)
         self.center()
         self.setWindowTitle('HandTrack')
 
@@ -56,11 +58,6 @@ class MainInterface (QMainWindow) :
         self.chanChangeSig.connect(self.monitorGraph.channelUpdate)
 
         self.show()
-
-    @pyqtSlot()
-    def chanChange(self):
-        self.chanChangeSig.emit(self.channelComboBox.currentIndex())
-
 
     def center(self):
         """centering the main window"""
@@ -97,11 +94,32 @@ class MainInterface (QMainWindow) :
         self.recordButton.setText("Record")
         self.recordButton.setCheckable(True)
         self.recordButton.setMaximumWidth(180)
+        self.recordButton.setEnabled(False)
         controlBoxLayout.addWidget(self.recordButton)
+
+        self.calibrateButton = QPushButton()
+        self.calibrateButton.setText("Calibrate")
+        self.calibrateButton.setCheckable(True)
+        self.calibrateButton.setMaximumWidth(180)
+        self.calibrateButton.setEnabled(False)
+        controlBoxLayout.addWidget(self.calibrateButton)
+
+
+        self.serialComboBox = SerialCombobox()
+        self.serialComboBox.clicked.connect(self.seriral_interface_chosen)
+        controlBoxLayout.addWidget(self.serialComboBox)
 
         self.create_simu_pilot()
         self.simuPilot.resize(100, 250)
         controlBoxLayout.addWidget(self.simuPilot)
+
+        self.R_value_label = QLabel("R = 0.0")
+        self.R_value_label.setAlignment(Qt.AlignCenter)
+        controlBoxLayout.addWidget(self.R_value_label)
+
+        self.A_value_label = QLabel("Angle = -")
+        self.A_value_label.setAlignment(Qt.AlignCenter)
+        controlBoxLayout.addWidget(self.A_value_label)
 
         self.create_session_pilot()
         self.sessionPilot.resize(100, 250)
@@ -162,7 +180,39 @@ class MainInterface (QMainWindow) :
 
         layout.addRow(QLabel("Working directory :"))
         self.workingDirSelect = RepoSelect()
+        self.workingDirSelect.valueChanged.connect(self.dir_chosen)
         layout.addRow(self.workingDirSelect)
 
         self.sessionPilot.setLayout(layout)
+
+    @pyqtSlot()
+    def chanChange(self):
+        self.chanChangeSig.emit(self.channelComboBox.currentIndex())
+
+    @pyqtSlot(list)
+    def updateRLabel(self, next_value):
+        self.R_value_label.setText("R = {0:.2f}".format(next_value[self.channelComboBox.currentIndex()]))
+
+    @pyqtSlot(float)
+    def updateALabel(self, angle):
+        self.A_value_label.setText("Angle = {0:.2f}".format(angle))
+
+    @pyqtSlot()
+    def seriral_interface_chosen(self):
+        self.calibrateButton.setEnabled(True)
+
+    @pyqtSlot()
+    def dir_chosen(self):
+        self.recordButton.setEnabled(True)
+
+
+class SerialCombobox(QComboBox):
+    clicked = pyqtSignal()
+
+    def showPopup(self):
+        self.clicked.emit()
+        self.clear()
+        for serial_chan in list(serial.tools.list_ports.comports()):
+            self.addItem(serial_chan.device)
+            super(SerialCombobox, self).showPopup()
 
