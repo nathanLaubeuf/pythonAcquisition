@@ -2,13 +2,13 @@ import sys
 import os
 import subprocess
 import matplotlib
-from acquisition.GUI import MainInterface
+from GUI import MainInterface
 from PyQt5.QtCore import (pyqtSlot, QObject, QThread)
 from PyQt5.QtWidgets import (QApplication)
-from acquisition.server import Server
-from acquisition.file_writer import FileWriter
-from acquisition.calibration import ExCaliber
-from acquisition.filter import Filter
+from server import Server
+from file_writer import FileWriter
+from calibration import ExCaliber
+from filter import Filter
 
 matplotlib.use("Qt5Agg")
 

@@ -7,8 +7,8 @@ from PyQt5.QtWidgets import (QMainWindow,
                              QDoubleSpinBox)
 from PyQt5.QtGui import (QKeySequence)
 from PyQt5.QtCore import Qt
-from acquisition.mygraphs import *
-from acquisition.repo_select import RepoSelect
+from mygraphs import *
+from repo_select import RepoSelect
 import serial.tools.list_ports
 
 """
