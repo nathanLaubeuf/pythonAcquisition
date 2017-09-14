@@ -33,7 +33,7 @@ class GraphCanvas(FigureCanvas):
 
 
 class DynamicGraphCanvas(GraphCanvas):
-    """A canvas that updates itself every second with a new plot."""
+    """A canvas that updates itself every 5 new value with a new plot."""
     figUpdate = pyqtSignal()
     minMaxUpdateSig = pyqtSignal()
     numSample = 1000
@@ -46,6 +46,9 @@ class DynamicGraphCanvas(GraphCanvas):
     freq = 44
     time = - numSample
     channelValues = [deque(10000 * [0], 10000) for i in range(numChan)]
+    counter = 0
+    line1 = None
+    CurrentXAxis = None
 
     def __init__(self, *args, **kwargs):
         GraphCanvas.__init__(self, *args, **kwargs)
@@ -53,7 +56,7 @@ class DynamicGraphCanvas(GraphCanvas):
         self.minMaxUpdateSig.connect(self.minMaxUpdate)
 
     def compute_initial_figure(self):
-        #self.values = deque(10000 * [0], 10000)
+        # self.values = deque(10000 * [0], 10000)
         self.counter = 0
         x_achse = arange(0, self.numSample, 1)
         y_achse = array([.0] * self.numSample)
@@ -62,12 +65,11 @@ class DynamicGraphCanvas(GraphCanvas):
         self.ax.set_xlabel("Time (sec)")
         self.ax.set_ylabel("Amplitude (Ohm)")
         self.ax.axis([-self.numSample/self.freq, 0, self.minValue, self.maxValue])
-        #self.manager = get_current_fig_manager()
+        # self.manager = get_current_fig_manager()
         self.line1 = self.ax.plot(x_achse, y_achse, '-')
 
     def connect_signal(self):
         self.figUpdate.connect(self.update_queue)
-
 
     @pyqtSlot()
     def update_figure(self):
@@ -79,8 +81,8 @@ class DynamicGraphCanvas(GraphCanvas):
 
     @pyqtSlot(list)
     def update_queue(self, next_value):
-        """Updates the queue and emmit a signal every 10 values to display the new values"""
-        #self.values.append(next_value[self.chanIndex])
+        """Updates the queue and emmit a signal every 5 values to display the new values"""
+        # self.values.append(next_value[self.chanIndex])
         if len(next_value) != self.numChan:
             return
         for i in range(len(self.channelValues)):

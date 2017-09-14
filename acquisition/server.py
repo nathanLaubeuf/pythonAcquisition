@@ -152,6 +152,7 @@ class Server(QObject):
                     else:
                         self.res_Value.append(round(self.R0_val / (1 / self.voltage_Value[i] - 1), 1))
             # print(self.res_Value)
+
             self.data_read.emit(self.res_Value)
             self.polar_1_data = []
 
@@ -279,64 +280,3 @@ class Server(QObject):
                 # Clean up the connection
                 connection.close()
                 self.finished.emit()
-
-
-class Dummy_Client(QObject):
-    "Test client : /!\ not working in current version"
-    sock = None
-    finished = pyqtSignal()
-    server_address = ('localhost', 12000)
-
-    def __init__(self):
-        super().__init__()
-
-    def process(self):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect(self.server_address)
-        try:
-
-            # Send data
-            message = (' 123|123 123|123 123|123').encode('utf-8')
-            print('sending "%s"' % message)
-            self.sock.sendall(message)
-
-        finally:
-            print('closing socket')
-            self.sock.close()
-            self.finished.emit()
-
-
-@pyqtSlot(list)
-def handle(next_value):
-    """Test handler"""
-    print("sent to gui : %s" % str(next_value))
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)  # define a Qt application
-
-    thread_serv = QThread()
-    # thread_cli = QThread()
-    producer = Server()
-    # client = Dummy_Client()
-
-    producer.moveToThread(thread_serv)
-    thread_serv.started.connect(producer.process)
-    producer.finished.connect(thread_serv.quit)
-    producer.finished.connect(producer.deleteLater)
-    thread_serv.finished.connect(thread_serv.deleteLater)
-
-    producer.data_read.connect(handle)
-
-    time.sleep(1)
-
-    # client.moveToThread(thread_cli)
-    # thread_cli.started.connect(client.process)
-    # client.finished.connect(thread_cli.quit)
-    # client.finished.connect(client.deleteLater)
-    # thread_cli.finished.connect(thread_cli.deleteLater)
-
-    thread_serv.start()
-    # thread_cli.start()
-
-    sys.exit(app.exec_())

@@ -4,8 +4,14 @@ from serial import *
 from threading import Timer
 import csv
 
-class ExCaliber(QObject):
 
+class ExCaliber(QObject):
+    """
+    Opens a serial in a thread
+    store the received angle value in a local variable
+    Make it correspond to a resistance value when received
+    write the pair in a csv file
+    """
     def __init__(self):
         super().__init__()
 
@@ -65,11 +71,14 @@ class ExCaliber(QObject):
 
 
 class SerialCon(QObject):
-
+    """
+    Serial handling
+    """
     data_read = pyqtSignal(float)
     finished = pyqtSignal()
     calib_serial = ''
     run = True
+    ser = None
 
     def __init__(self, serial_name):
         super().__init__()
@@ -100,14 +109,16 @@ class SerialCon(QObject):
             if len(line) != 0:
                 # print(float(line))
                 self.data_read.emit(float(line))
-
-
         self.ser.close()
         print('Serial closed')
         self.finished.emit()
         return
 
-
+"""
+                    -----------------
+                    For test purposes 
+                    -----------------
+"""
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)  # define a Qt application

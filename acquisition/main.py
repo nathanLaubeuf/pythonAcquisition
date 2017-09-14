@@ -12,22 +12,26 @@ from acquisition.filter import Filter
 
 matplotlib.use("Qt5Agg")
 
+
 class AppManager(QObject):
+    """
+    Instantiates the main components of the application and handle communication between them via major events
+    """
     def __init__(self, parent=None):
         super(self.__class__, self).__init__(parent)
 
         self.gui = MainInterface()
 
         self.thread = QThread()
-        self.producer = Server()
+        self.server = Server()
         self.filter = Filter()
 
         self.uartProcess = None
 
-        self.producer.moveToThread(self.thread)
-        self.thread.started.connect(self.producer.process)
-        self.producer.finished.connect(self.thread.quit)
-        self.producer.finished.connect(self.producer.deleteLater)
+        self.server.moveToThread(self.thread)
+        self.thread.started.connect(self.server.process)
+        self.server.finished.connect(self.thread.quit)
+        self.server.finished.connect(self.server.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
 
         self.fileWriter = FileWriter()
@@ -36,7 +40,7 @@ class AppManager(QObject):
 
         self.connectGuiEvents()
 
-        self.producer.data_read.connect(self.filter.resfilter)
+        self.server.data_read.connect(self.filter.resfilter)
 
         """
         The processed values are accessible by connecting to the filtered.connect signal
@@ -116,9 +120,6 @@ class AppManager(QObject):
             self.gui.recordButton.clicked.disconnect(self.fileWriter.stopRecord)
             self.gui.statusBar().showMessage('Ready')
 
-
-
-
 """
 -----------------------------------------------------------------------------
                             Application Start
@@ -126,7 +127,7 @@ class AppManager(QObject):
 """
 
 
-def main() :
+def main():
     app = QApplication(sys.argv) #define a Qt application
     main_manager = AppManager(app)
     sys.exit(app.exec_())

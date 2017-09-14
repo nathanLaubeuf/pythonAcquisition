@@ -5,11 +5,15 @@ from collections import deque
 from PyQt5.QtCore import (QObject, QThread, pyqtSignal, pyqtSlot)
 
 # --  Benchmarking -- #
-current_milli_time = lambda: int(round(time.time() * 1000))
+# current_milli_time = lambda: int(round(time.time() * 1000))
 # ------------------  #
 
 
 class Filter (QObject):
+    """
+    Data filter
+    To modify for more advanced features
+    """
     num_chan = 10
     dataList = []
     filtered = pyqtSignal(list)

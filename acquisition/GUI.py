@@ -11,6 +11,7 @@ from acquisition.mygraphs import *
 from acquisition.repo_select import RepoSelect
 import serial.tools.list_ports
 
+
 """
 -----------------------------------------------------------------------------
                                 GUI
@@ -73,10 +74,10 @@ class MainInterface (QMainWindow) :
         graphsBoxLayout = QVBoxLayout()
 
         self.monitorGraph = DynamicGraphCanvas()
-        #self.frequencyGraph = DynamicGraphCanvas()
+        # self.frequencyGraph = DynamicGraphCanvas()
 
         graphsBoxLayout.addWidget(self.monitorGraph)
-        #graphsBoxLayout.addWidget(self.frequencyGraph)
+        # graphsBoxLayout.addWidget(self.frequencyGraph)
 
         self.graphsBox.setLayout(graphsBoxLayout)
 
@@ -200,6 +201,9 @@ class MainInterface (QMainWindow) :
 
 
 class SerialCombobox(QComboBox):
+    """
+    Auto updated combobox to list all available serial
+    """
     clicked = pyqtSignal()
 
     def showPopup(self):
