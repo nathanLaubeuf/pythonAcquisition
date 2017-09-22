@@ -19,15 +19,15 @@ class AppManager(QObject):
         self.gui = MainInterface()
 
         self.thread = QThread()
-        self.producer = Server()
+        self.server = Server()
         self.filter = Filter()
 
         self.uartProcess = None
 
-        self.producer.moveToThread(self.thread)
-        self.thread.started.connect(self.producer.process)
-        self.producer.finished.connect(self.thread.quit)
-        self.producer.finished.connect(self.producer.deleteLater)
+        self.server.moveToThread(self.thread)
+        self.thread.started.connect(self.server.process)
+        self.server.finished.connect(self.thread.quit)
+        self.server.finished.connect(self.server.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
 
         self.fileWriter = FileWriter()
@@ -38,7 +38,7 @@ class AppManager(QObject):
 
         self.connectGuiEvents()
 
-        self.producer.data_read.connect(self.filter.resfilter)
+        self.server.data_read.connect(self.filter.resfilter)
         """
         The processed values are accessible by connecting to the filtered.connect signal
         """
