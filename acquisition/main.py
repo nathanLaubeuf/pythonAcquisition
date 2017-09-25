@@ -67,7 +67,7 @@ class AppManager(QObject):
     def startButtonHandle(self):
         if self.gui.startButton.isChecked():
             self.gui.monitorGraph.clearGraph()
-            self.uartProcess = subprocess.Popen(["python2", os.getcwd() + "/uart_process.py"])
+            self.uartProcess = subprocess.Popen(["python2", os.path.abspath(os.path.dirname(__file__)) + "/uart_process.py"])
             self.gui.startButton.setText("Stop")
         else:
             self.uartProcess.terminate()
